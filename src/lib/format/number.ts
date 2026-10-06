@@ -73,6 +73,15 @@ export function formatQuantity(value: number | null | undefined): string {
   }).format(value);
 }
 
+/** Quantity with an explicit sign, for share changes between snapshots. */
+export function formatQuantityChange(value: number | null | undefined): string {
+  if (!isRenderable(value)) {
+    return "";
+  }
+
+  return `${value > 0 ? "+" : value < 0 ? "-" : "±"}${formatQuantity(Math.abs(value))}`;
+}
+
 export type Signedness = "positive" | "negative" | "neutral";
 
 /**

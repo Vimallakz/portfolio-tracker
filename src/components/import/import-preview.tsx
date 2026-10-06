@@ -3,9 +3,9 @@
 import { AlertTriangle, Info } from "lucide-react";
 import { useState } from "react";
 
+import { HoldingStatusBadge } from "@/components/shared/holding-status-badge";
 import { SignedValue as Signed, SIGNED_TEXT_CLASS } from "@/components/shared/signed-value";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -23,10 +23,10 @@ import {
   formatMoneyChange,
   formatPercentage,
   formatQuantity,
+  formatQuantityChange,
   signednessOf,
   type Signedness,
 } from "@/lib/format/number";
-import type { HoldingChangeStatus } from "@/lib/portfolio/comparison/snapshot-comparator";
 import type { ImportPreview as ImportPreviewData, PreviewHolding } from "@/lib/portfolio/importer/preview";
 import { isValidTicker, normalizeTicker } from "@/lib/portfolio/securities/ticker";
 import { cn } from "@/lib/utils";
@@ -39,28 +39,7 @@ type ImportPreviewProps = {
   onCancel: () => void;
 };
 
-const STATUS_LABEL: Record<HoldingChangeStatus, string> = {
-  NEW: "New",
-  INCREASED: "Increased",
-  REDUCED: "Reduced",
-  UNCHANGED: "Unchanged",
-  REMOVED: "Removed",
-};
-
-const STATUS_VARIANT: Record<HoldingChangeStatus, "default" | "secondary" | "outline" | "destructive"> = {
-  NEW: "default",
-  INCREASED: "secondary",
-  REDUCED: "secondary",
-  UNCHANGED: "outline",
-  REMOVED: "destructive",
-};
-
 const toNumber = (value: string | undefined | null) => (value == null ? null : Number(value));
-
-function formatQuantityChange(value: number | null): string {
-  if (value === null || !Number.isFinite(value)) return "";
-  return `${value > 0 ? "+" : value < 0 ? "-" : "±"}${formatQuantity(Math.abs(value))}`;
-}
 
 function Stat({ label, value, tone }: { label: string; value: React.ReactNode; tone?: Signedness | "warning" }) {
   return (
@@ -153,7 +132,7 @@ function HoldingRow({ holding, tickerInput }: { holding: PreviewHolding; tickerI
         ) : null}
       </TableCell>
       <TableCell>
-        <Badge variant={STATUS_VARIANT[holding.status]}>{STATUS_LABEL[holding.status]}</Badge>
+        <HoldingStatusBadge status={holding.status} />
       </TableCell>
       <TableCell className="text-right tabular-nums">
         {holding.previous && holding.next ? (
