@@ -108,7 +108,7 @@ const LARGEST_HOLDINGS_LIMIT = 10;
 
 const toNumber = (value: Decimal) => value.toNumber();
 
-function totalsOf(holdings: SnapshotHoldingRow[]) {
+export function totalsOf(holdings: SnapshotHoldingRow[]) {
   const investedAmount = sumDecimals(holdings.map((h) => h.investedAmount));
   const currentValue = sumDecimals(holdings.map((h) => h.currentValue));
 
@@ -207,7 +207,7 @@ export function buildHistory(snapshots: SnapshotRow[]): HistoryPoint[] {
   });
 }
 
-const toComparable = (h: SnapshotHoldingRow): ComparableHolding => ({
+export const toComparable = (h: SnapshotHoldingRow): ComparableHolding => ({
   key: h.securityId,
   name: h.name,
   quantity: h.quantity,

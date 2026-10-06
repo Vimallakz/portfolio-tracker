@@ -17,15 +17,19 @@ function count(value: number, sign: "+" | "-") {
   return value === 0 ? "0" : `${sign}${value}`;
 }
 
-export function SincePreviousCard({ change }: { change: SincePrevious | null }) {
+export function SincePreviousCard({
+  change,
+  emptyMessage = "Upload another snapshot to see what changed.",
+}: {
+  change: SincePrevious | null;
+  emptyMessage?: string;
+}) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Since previous snapshot</CardTitle>
         <CardDescription>
-          {change
-            ? `Compared with ${formatSnapshotDate(change.previousSnapshotDate)}.`
-            : "Upload another snapshot to see what changed."}
+          {change ? `Compared with ${formatSnapshotDate(change.previousSnapshotDate)}.` : emptyMessage}
         </CardDescription>
       </CardHeader>
       {change ? (

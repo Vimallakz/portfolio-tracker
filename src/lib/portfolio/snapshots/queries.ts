@@ -1,18 +1,19 @@
 import { prisma } from "@/lib/db/prisma";
-import type { SnapshotRow } from "@/lib/portfolio/analytics/dashboard";
+import type { HistorySnapshot } from "@/lib/portfolio/history/history";
 
 /**
  * Every snapshot for a profile with its holdings, oldest first. A personal
  * portfolio has dozens of holdings and one snapshot a month, so loading the
  * full history is cheaper than a round trip per chart point.
  */
-export async function listProfileSnapshots(profileId: string): Promise<SnapshotRow[]> {
+export async function listProfileSnapshots(profileId: string): Promise<HistorySnapshot[]> {
   const snapshots = await prisma.portfolioSnapshot.findMany({
     where: { profileId },
     orderBy: [{ snapshotDate: "asc" }, { createdAt: "asc" }],
     select: {
       id: true,
       snapshotDate: true,
+      fileName: true,
       holdings: {
         select: {
           securityId: true,
@@ -33,6 +34,7 @@ export async function listProfileSnapshots(profileId: string): Promise<SnapshotR
   return snapshots.map((snapshot) => ({
     id: snapshot.id,
     snapshotDate: snapshot.snapshotDate.toISOString().slice(0, 10),
+    fileName: snapshot.fileName,
     holdings: snapshot.holdings.map((h) => ({
       securityId: h.securityId,
       name: h.security.name,
