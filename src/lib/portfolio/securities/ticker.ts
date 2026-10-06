@@ -27,3 +27,13 @@ export function getTickertapeUrl(ticker: string): string {
 
   return `${TICKERTAPE_US_STOCKS_BASE}${encodeURIComponent(normalized)}`;
 }
+
+/** Tickertape's own slug wins over the ticker. Null until a valid one is set. */
+export function findTickertapeUrl(security: {
+  ticker: string | null;
+  tickertapeTicker: string | null;
+}): string | null {
+  const slug = security.tickertapeTicker ?? security.ticker;
+
+  return slug && isValidTicker(slug) ? getTickertapeUrl(slug) : null;
+}

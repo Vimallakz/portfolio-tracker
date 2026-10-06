@@ -25,7 +25,7 @@ export function PerformersCard({ title, description, emptyMessage, performers }:
           <ol className="divide-y">
             {performers.map((p) => (
               <li key={p.securityId} className="flex items-center justify-between gap-3 py-2 first:pt-0 last:pb-0">
-                <SecurityLabel name={p.name} ticker={p.ticker} type={p.type} />
+                <SecurityLabel securityId={p.securityId} name={p.name} ticker={p.ticker} type={p.type} />
                 <div className="shrink-0 text-right tabular-nums">
                   <SignedValue value={p.pnlPercentage} className="block text-sm font-medium">
                     {formatPercentage(p.pnlPercentage)}

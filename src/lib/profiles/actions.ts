@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { z } from "zod";
 
+import type { ActionResult } from "@/lib/actions/result";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/db/prisma";
 import {
@@ -13,7 +14,7 @@ import {
 import { findOwnedProfile } from "@/lib/profiles/queries";
 import { profileInputSchema } from "@/lib/profiles/schema";
 
-export type ActionResult = { ok: true } | { ok: false; error: string };
+export type { ActionResult };
 
 const selectProfileSchema = z.object({ profileId: z.string().min(1) });
 

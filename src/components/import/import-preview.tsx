@@ -203,8 +203,8 @@ export function ImportPreview({ preview, isPending, onConfirm, onCancel }: Impor
                   : "Some securities have no ticker yet"}
               </AlertTitle>
               <AlertDescription>
-                They will be remembered by name for future imports. Tickers are optional for now; add them later to
-                enable Tickertape links.
+                They will be remembered by name for future imports. After importing, add their tickers under Securities
+                → Add tickers to enable Tickertape links.
               </AlertDescription>
             </Alert>
           ) : null}

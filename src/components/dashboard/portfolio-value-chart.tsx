@@ -60,7 +60,17 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
   );
 }
 
-export function PortfolioValueChart({ history }: { history: HistoryPoint[] }) {
+type PortfolioValueChartProps = {
+  history: HistoryPoint[];
+  title?: string;
+  description?: string;
+};
+
+export function PortfolioValueChart({
+  history,
+  title = "Portfolio history",
+  description = "One point per uploaded snapshot. Values between snapshots are not tracked.",
+}: PortfolioValueChartProps) {
   const [visible, setVisible] = useState<Record<SeriesKey, boolean>>({
     currentValue: true,
     investedAmount: true,
@@ -78,10 +88,8 @@ export function PortfolioValueChart({ history }: { history: HistoryPoint[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Portfolio history</CardTitle>
-        <CardDescription>
-          One point per uploaded snapshot. Values between snapshots are not tracked.
-        </CardDescription>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
         <div className="flex flex-wrap gap-1.5" role="group" aria-label="Chart series">
