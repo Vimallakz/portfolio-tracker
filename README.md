@@ -16,13 +16,13 @@ The application keeps three kinds of information strictly separate:
 
 ## Status
 
-Phase 1 (foundation) is complete: application shell, navigation, theming,
-multi-profile support, and the database foundation.
+Phases 1 and 2 are complete: application shell, navigation, theming,
+multi-profile support, and the full portfolio data model with seed data.
 
 | Phase | Scope | State |
 | ----- | ----- | ----- |
 | 1 | Next.js, Tailwind, shadcn/ui, Prisma, layout, profile selector, theme | Done |
-| 2 | Security, Tag, Snapshot, Holding and Research models | Not started |
+| 2 | Security, Tag, Snapshot, Holding and Research models | Done |
 | 3 | CSV upload, parsing, column mapping, security resolution, import preview | Not started |
 | 4 | Dashboard summary, allocation, performers, value chart | Not started |
 | 5 | Security detail page and research editing | Not started |
@@ -92,15 +92,23 @@ live in `prisma.config.ts` (Prisma 7 no longer reads the URL from the schema).
 npm run db:migrate    # create and apply a migration in development
 npm run db:deploy     # apply existing migrations (CI/production)
 npm run db:generate   # regenerate the Prisma client
-npm run db:seed       # insert development profiles (idempotent)
+npm run db:seed       # insert development profiles, securities and snapshots (idempotent)
 npm run db:studio     # browse the data
 ```
 
 The generated Prisma client is written to `src/generated/prisma` and is not
 committed; `npm install` regenerates it via the `postinstall` script.
 
-Historical portfolio data is immutable by design. Once Phase 3 lands, a new CSV
-import never updates an existing snapshot.
+Historical portfolio data is immutable by design: a new CSV import always creates
+a new `PortfolioSnapshot` and never updates an existing one or its holdings.
+
+Securities and their CSV name aliases are a shared master holding objective facts
+only (ticker, type, sector). Everything personal — snapshots, research, tags and
+import sessions — is scoped to a profile. Because tags are profile-scoped, any
+query through `Security.tags` must also filter on the tag's `profileId`.
+
+The Tickertape link is not stored. `getTickertapeUrl()` in
+`src/lib/portfolio/securities/ticker.ts` builds it from a validated ticker.
 
 ## Scripts
 
@@ -117,8 +125,9 @@ npm run test:watch    # run unit tests in watch mode
 ## Testing
 
 Unit tests live beside the code they cover as `*.test.ts` and run on Node via
-Vitest. Phase 1 covers the pure logic that exists so far: PAN masking and
-validation, display formatting, and navigation matching.
+Vitest. They cover the pure logic that exists so far: PAN masking and
+validation, display formatting, navigation matching, ticker validation and
+Tickertape URL generation, and security name normalisation.
 
 ```bash
 npm test
@@ -159,6 +168,8 @@ src/
     config/             navigation definition
     db/                 Prisma client singleton
     format/             money, percentage and quantity formatting
+    portfolio/
+      securities/       ticker validation, Tickertape URL, name normalisation
     profiles/           profile queries, actions, schema, PAN helpers
     env.ts              validated server environment
   generated/prisma/     generated Prisma client (not committed)
