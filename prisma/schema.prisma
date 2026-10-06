@@ -48,8 +48,8 @@ enum ImportSessionStatus {
   FAILED
 }
 
-/// Account owner. Version 1 has no login, so a single local user row is seeded
-/// and every profile belongs to it. This keeps the ownership chain in place for
+/// Account owner. Version 1 has no login, so a single local user row is created
+/// on first use and every profile belongs to it. This keeps the ownership chain in place for
 /// when real authentication is added.
 model User {
   id        String   @id @default(cuid())

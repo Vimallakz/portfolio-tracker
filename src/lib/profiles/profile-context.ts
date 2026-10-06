@@ -27,11 +27,13 @@ export type ProfileContext = {
  * and falls back to the first profile when stale or forged.
  */
 export async function getProfileContext(): Promise<ProfileContext> {
-  const user = await getCurrentUser();
-  const profiles = await listProfiles(user.id);
-
+  // Read cookies before any query: it marks the route dynamic, so the build
+  // bails out of prerendering instead of querying the database.
   const cookieStore = await cookies();
   const requestedId = cookieStore.get(ACTIVE_PROFILE_COOKIE)?.value;
+
+  const user = await getCurrentUser();
+  const profiles = await listProfiles(user.id);
 
   const activeProfile = requestedId
     ? await findOwnedProfile(user.id, requestedId)
