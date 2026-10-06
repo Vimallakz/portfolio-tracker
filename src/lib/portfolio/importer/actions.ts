@@ -10,6 +10,7 @@ import {
   previewImport,
 } from "@/lib/portfolio/importer/import-service";
 import type { ImportConfirmation, ImportPreview } from "@/lib/portfolio/importer/preview";
+import { parseTickerChoices } from "@/lib/portfolio/importer/ticker-choices";
 import { requireActiveProfile } from "@/lib/profiles/profile-context";
 
 export type ImportActionResult<T> = { ok: true; data: T } | { ok: false; error: string };
@@ -31,6 +32,10 @@ const snapshotDateSchema = z.iso
 const confirmSchema = z.object({
   sessionId: z.string().min(1).max(64),
   allowDuplicate: z.boolean(),
+  tickers: z
+    .record(z.string().min(1).max(600), z.string().max(20))
+    .refine((value) => Object.keys(value).length <= 500, "Too many tickers.")
+    .default({}),
 });
 
 const GENERIC_ERROR = "The import failed. Nothing was saved. Please try again.";
@@ -108,6 +113,12 @@ export async function confirmPortfolioImport(
       throw new ImportError("Invalid import request.");
     }
 
+    const tickers = parseTickerChoices(parsed.data.tickers);
+
+    if (!tickers.ok) {
+      throw new ImportError(tickers.error);
+    }
+
     // The session must belong to the active profile, so switching profiles
     // mid-import cannot write one profile's CSV into another.
     const { profile } = await requireActiveProfile();
@@ -116,6 +127,7 @@ export async function confirmPortfolioImport(
       profileId: profile.id,
       sessionId: parsed.data.sessionId,
       allowDuplicate: parsed.data.allowDuplicate,
+      tickers: tickers.tickers,
     });
 
     revalidatePath("/", "layout");

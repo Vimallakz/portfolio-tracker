@@ -25,7 +25,6 @@ export default async function SecurityPage({ params }: { params: Promise<{ secur
   return (
     <>
       <SecurityHeader security={security} tags={tags} hasResearch={research !== null} />
-
       <div className="grid gap-4">
         <SecurityPositionCard position={position} latestSnapshotDate={detail.latestSnapshotDate} lastHeld={history.at(-1)} />
 

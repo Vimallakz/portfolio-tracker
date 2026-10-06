@@ -132,6 +132,29 @@ async function findDuplicate(
     : null;
 }
 
+/** Fails the import if a chosen ticker already belongs to a different security. */
+async function assertTickersAvailable(
+  db: Prisma.TransactionClient,
+  choices: { ticker: string; securityId: string | null }[],
+): Promise<void> {
+  if (choices.length === 0) {
+    return;
+  }
+
+  const taken = await db.security.findMany({
+    where: { country: "US", ticker: { in: choices.map((c) => c.ticker) } },
+    select: { id: true, name: true, ticker: true },
+  });
+
+  for (const owner of taken) {
+    const choice = choices.find((c) => c.ticker === owner.ticker);
+
+    if (choice && choice.securityId !== owner.id) {
+      throw new ImportError(`${owner.ticker} is already assigned to “${owner.name}”. Nothing was saved.`);
+    }
+  }
+}
+
 type PreviewInput = {
   profile: { id: string; name: string };
   fileName: string;
@@ -263,6 +286,8 @@ type ConfirmInput = {
   profileId: string;
   sessionId: string;
   allowDuplicate: boolean;
+  /** Ticker per preview holding key, for securities that have none yet. */
+  tickers: Map<string, string>;
 };
 
 /**
@@ -273,6 +298,7 @@ export async function confirmImport({
   profileId,
   sessionId,
   allowDuplicate,
+  tickers,
 }: ConfirmInput): Promise<ImportConfirmation> {
   return prisma.$transaction(
     async (tx) => {
@@ -324,16 +350,53 @@ export async function confirmImport({
       }
 
       const resolved = await resolveSecurities(tx, holdings.map((h) => h.normalizedName));
+
+      // Keys come from the preview: a security id, or the CSV name for a
+      // security that did not exist yet. Looking up both covers a name that
+      // another import created between preview and confirm.
+      const tickerFor = (normalizedName: string) => {
+        const existing = resolved.get(normalizedName);
+
+        return (
+          tickers.get(`${NEW_SECURITY_KEY_PREFIX}${normalizedName}`) ?? (existing ? tickers.get(existing.id) : undefined)
+        );
+      };
+
+      await assertTickersAvailable(
+        tx,
+        holdings.flatMap((h) => {
+          const ticker = tickerFor(h.normalizedName);
+          const existing = resolved.get(h.normalizedName);
+
+          return ticker && !existing?.ticker ? [{ ticker, securityId: existing?.id ?? null }] : [];
+        }),
+      );
+
       let createdSecurities = 0;
 
       for (const holding of holdings) {
-        if (resolved.has(holding.normalizedName)) {
+        const existing = resolved.get(holding.normalizedName);
+        const ticker = tickerFor(holding.normalizedName);
+
+        if (existing) {
+          if (ticker && !existing.ticker) {
+            resolved.set(
+              holding.normalizedName,
+              await tx.security.update({
+                where: { id: existing.id },
+                data: { ticker },
+                select: { id: true, name: true, ticker: true, type: true },
+              }),
+            );
+          }
+
           continue;
         }
 
         const security = await tx.security.create({
           data: {
             name: holding.sourceName,
+            ticker: ticker ?? null,
             type: guessSecurityType(holding.sourceName),
             aliases: {
               create: { sourceName: holding.sourceName, normalizedName: holding.normalizedName },
