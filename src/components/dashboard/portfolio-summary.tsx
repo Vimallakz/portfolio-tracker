@@ -1,6 +1,7 @@
+import { Money } from "@/components/currency/money";
 import { SignedValue } from "@/components/shared/signed-value";
 import { Card, CardContent } from "@/components/ui/card";
-import { formatMoney, formatMoneyChange, formatPercentage } from "@/lib/format/number";
+import { formatPercentage } from "@/lib/format/number";
 import type { PortfolioSummary as PortfolioSummaryData } from "@/lib/portfolio/analytics/dashboard";
 
 function SummaryStat({ label, children, detail }: { label: string; children: React.ReactNode; detail?: React.ReactNode }) {
@@ -18,15 +19,15 @@ function SummaryStat({ label, children, detail }: { label: string; children: Rea
 export function PortfolioSummary({ summary }: { summary: PortfolioSummaryData }) {
   return (
     <section aria-label="Portfolio summary" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      <SummaryStat label="Invested">{formatMoney(summary.investedAmount)}</SummaryStat>
-      <SummaryStat label="Current value">{formatMoney(summary.currentValue)}</SummaryStat>
+      <SummaryStat label="Invested"><Money value={summary.investedAmount} /></SummaryStat>
+      <SummaryStat label="Current value"><Money value={summary.currentValue} /></SummaryStat>
       <SummaryStat
         label="Portfolio return"
         detail={
           <SignedValue value={summary.pnlAmount}>{formatPercentage(summary.pnlPercentage)} on invested</SignedValue>
         }
       >
-        <SignedValue value={summary.pnlAmount}>{formatMoneyChange(summary.pnlAmount)}</SignedValue>
+        <SignedValue value={summary.pnlAmount}><Money value={summary.pnlAmount} change /></SignedValue>
       </SummaryStat>
       <SummaryStat
         label="Holdings"

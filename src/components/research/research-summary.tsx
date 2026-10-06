@@ -2,18 +2,18 @@ import { NotebookPen, Pencil } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { Money } from "@/components/currency/money";
 import { ConvictionStars } from "@/components/research/conviction-stars";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatMoney } from "@/lib/format/number";
 import type { SecurityResearchView } from "@/lib/portfolio/securities/queries";
 import { INVESTMENT_STATUS_LABEL } from "@/lib/research/labels";
 
 const updatedFormat = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" });
 
-const price = (value: string | null) => (value === null ? null : formatMoney(Number(value)));
+const price = (value: string | null) => (value === null ? null : <Money value={Number(value)} />);
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -28,7 +28,7 @@ function Prose({ text }: { text: string | null }) {
   return text ? <p className="text-sm whitespace-pre-line">{text}</p> : null;
 }
 
-function Figure({ label, value }: { label: string; value: string | null }) {
+function Figure({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="rounded-lg border px-3 py-2.5">
       <dt className="text-muted-foreground text-xs">{label}</dt>
@@ -53,7 +53,11 @@ export function ResearchSummary({ securityId, research }: { securityId: string; 
 
   const zone =
     research.accumulationMin || research.accumulationMax
-      ? `${price(research.accumulationMin) ?? "…"} – ${price(research.accumulationMax) ?? "…"}`
+      ? (
+          <>
+            {price(research.accumulationMin) ?? "…"} – {price(research.accumulationMax) ?? "…"}
+          </>
+        )
       : null;
 
   const cases = [

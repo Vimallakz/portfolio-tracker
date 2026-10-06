@@ -1,7 +1,8 @@
+import { Money } from "@/components/currency/money";
 import { SignedValue } from "@/components/shared/signed-value";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatSnapshotDate } from "@/lib/format/date";
-import { formatMoneyChange, formatPercentage } from "@/lib/format/number";
+import { formatPercentage } from "@/lib/format/number";
 import type { SincePrevious } from "@/lib/portfolio/analytics/dashboard";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
@@ -37,12 +38,12 @@ export function SincePreviousCard({
           <dl className="divide-y">
             <Row label="Value change">
               <SignedValue value={change.currentValueChange}>
-                {formatMoneyChange(change.currentValueChange)} ({formatPercentage(change.currentValueChangePercentage)})
+                <Money value={change.currentValueChange} change /> ({formatPercentage(change.currentValueChangePercentage)})
               </SignedValue>
             </Row>
-            <Row label="Invested change">{formatMoneyChange(change.investedAmountChange)}</Row>
+            <Row label="Invested change"><Money value={change.investedAmountChange} change /></Row>
             <Row label="P&L change">
-              <SignedValue value={change.pnlAmountChange}>{formatMoneyChange(change.pnlAmountChange)}</SignedValue>
+              <SignedValue value={change.pnlAmountChange}><Money value={change.pnlAmountChange} change /></SignedValue>
             </Row>
             <Row label="New holdings">{count(change.newHoldings, "+")}</Row>
             <Row label="Removed">{count(change.removedHoldings, "-")}</Row>

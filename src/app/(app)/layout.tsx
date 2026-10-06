@@ -1,5 +1,10 @@
+import { cookies } from "next/headers";
+
+import { CurrencyProvider } from "@/components/currency/currency-provider";
 import { AppHeader } from "@/components/layout/app-header";
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { DISPLAY_CURRENCY_COOKIE, parseDisplayCurrency } from "@/lib/currency/currency";
+import { getUsdInrRate } from "@/lib/currency/rate";
 import { getProfileContext } from "@/lib/profiles/profile-context";
 
 /**
@@ -7,17 +12,20 @@ import { getProfileContext } from "@/lib/profiles/profile-context";
  * page below inherits the same scope instead of deriving it independently.
  */
 export default async function AppLayout({ children }: LayoutProps<"/">) {
-  const { profiles, activeProfile } = await getProfileContext();
+  const [{ userId, profiles, activeProfile }, cookieStore] = await Promise.all([getProfileContext(), cookies()]);
+  const rate = await getUsdInrRate(userId);
 
   return (
-    <div className="flex min-h-full flex-1">
-      <AppSidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <AppHeader profiles={profiles} activeProfile={activeProfile} />
-        <main className="flex-1 px-4 py-6 lg:px-8">
-          <div className="mx-auto w-full max-w-7xl">{children}</div>
-        </main>
+    <CurrencyProvider initialCurrency={parseDisplayCurrency(cookieStore.get(DISPLAY_CURRENCY_COOKIE)?.value)} rate={rate}>
+      <div className="flex min-h-full flex-1">
+        <AppSidebar />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <AppHeader profiles={profiles} activeProfile={activeProfile} />
+          <main className="flex-1 px-4 py-6 lg:px-8">
+            <div className="mx-auto w-full max-w-7xl">{children}</div>
+          </main>
+        </div>
       </div>
-    </div>
+    </CurrencyProvider>
   );
 }

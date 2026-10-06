@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
 
+import { Money } from "@/components/currency/money";
 import { SignedValue } from "@/components/shared/signed-value";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatSnapshotDate } from "@/lib/format/date";
-import { formatMoney, formatMoneyChange, formatPercentage, formatQuantity } from "@/lib/format/number";
+import { formatPercentage, formatQuantity } from "@/lib/format/number";
 import type { SecurityHistoryRow } from "@/lib/portfolio/securities/queries";
 
 const weightFormat = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
@@ -49,13 +50,13 @@ export function SecurityPositionCard({ position, latestSnapshotDate, lastHeld }:
       <CardContent>
         <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Stat label="Quantity">{formatQuantity(position.quantity)}</Stat>
-          <Stat label="Average buy price">{formatMoney(position.averageBuyPrice)}</Stat>
-          <Stat label="Current price">{formatMoney(position.currentPrice)}</Stat>
+          <Stat label="Average buy price"><Money value={position.averageBuyPrice} /></Stat>
+          <Stat label="Current price"><Money value={position.currentPrice} /></Stat>
           <Stat label="Portfolio weight">{weightFormat.format(position.weight)}%</Stat>
-          <Stat label="Invested">{formatMoney(position.investedAmount)}</Stat>
-          <Stat label="Current value">{formatMoney(position.currentValue)}</Stat>
+          <Stat label="Invested"><Money value={position.investedAmount} /></Stat>
+          <Stat label="Current value"><Money value={position.currentValue} /></Stat>
           <Stat label="P&L">
-            <SignedValue value={position.pnlAmount}>{formatMoneyChange(position.pnlAmount)}</SignedValue>
+            <SignedValue value={position.pnlAmount}><Money value={position.pnlAmount} change /></SignedValue>
           </Stat>
           <Stat label="P&L %">
             <SignedValue value={position.pnlAmount}>{formatPercentage(position.pnlPercentage)}</SignedValue>

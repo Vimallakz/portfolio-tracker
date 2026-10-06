@@ -3,6 +3,7 @@
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { Money } from "@/components/currency/money";
 import { SecurityLabel } from "@/components/dashboard/security-label";
 import { HoldingStatusBadge } from "@/components/shared/holding-status-badge";
 import { SignedValue } from "@/components/shared/signed-value";
@@ -16,8 +17,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  formatMoney,
-  formatMoneyChange,
   formatPercentage,
   formatQuantity,
   formatQuantityChange,
@@ -158,21 +157,21 @@ export function HoldingChangesTable({
                   )}
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
-                  <div>{formatMoney(metric(h, "investedAmount"))}</div>
+                  <div><Money value={metric(h, "investedAmount")} /></div>
                   {investedChange ? (
-                    <div className="text-muted-foreground text-xs">{formatMoneyChange(investedChange)}</div>
+                    <div className="text-muted-foreground text-xs"><Money value={investedChange} change /></div>
                   ) : null}
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
-                  <div>{formatMoney(metric(h, "currentValue"))}</div>
+                  <div><Money value={metric(h, "currentValue")} /></div>
                   {valueChange ? (
                     <div className="text-xs">
-                      <SignedValue value={valueChange}>{formatMoneyChange(valueChange)}</SignedValue>
+                      <SignedValue value={valueChange}><Money value={valueChange} change /></SignedValue>
                     </div>
                   ) : null}
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
-                  <SignedValue value={removed ? null : pnl}>{formatMoneyChange(pnl)}</SignedValue>
+                  <SignedValue value={removed ? null : pnl}><Money value={pnl} change /></SignedValue>
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
                   <SignedValue value={removed ? null : pnl}>{formatPercentage(metric(h, "pnlPercentage"))}</SignedValue>

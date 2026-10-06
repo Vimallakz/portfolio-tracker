@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUp, ArrowUpDown, Search } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
+import { Money } from "@/components/currency/money";
 import { ConvictionStars } from "@/components/research/conviction-stars";
 import { SignedValue } from "@/components/shared/signed-value";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatMoney, formatMoneyChange, formatPercentage, formatQuantity } from "@/lib/format/number";
+import { formatPercentage, formatQuantity } from "@/lib/format/number";
 import {
   DEFAULT_SECURITY_FILTERS,
   DEFAULT_SECURITY_SORT,
@@ -208,10 +209,10 @@ export function SecurityTable({ rows, tags, initialFilters }: SecurityTableProps
                   </TableCell>
                   <TableCell>{row.type === "ETF" ? "ETF" : "Stock"}</TableCell>
                   <TableCell className="text-right tabular-nums">{formatQuantity(row.quantity)}</TableCell>
-                  <TableCell className="text-right tabular-nums">{formatMoney(row.investedAmount)}</TableCell>
-                  <TableCell className="text-right tabular-nums">{formatMoney(row.currentValue)}</TableCell>
+                  <TableCell className="text-right tabular-nums"><Money value={row.investedAmount} /></TableCell>
+                  <TableCell className="text-right tabular-nums"><Money value={row.currentValue} /></TableCell>
                   <TableCell className="text-right tabular-nums">
-                    <SignedValue value={row.pnlAmount}>{formatMoneyChange(row.pnlAmount)}</SignedValue>
+                    <SignedValue value={row.pnlAmount}><Money value={row.pnlAmount} change /></SignedValue>
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
                     <SignedValue value={row.pnlAmount}>{formatPercentage(row.pnlPercentage)}</SignedValue>

@@ -1,5 +1,5 @@
+import { Money } from "@/components/currency/money";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatMoney } from "@/lib/format/number";
 import type { AllocationSlice } from "@/lib/portfolio/analytics/dashboard";
 
 const LABELS = { STOCK: "Stocks", ETF: "ETFs" } as const;
@@ -24,7 +24,7 @@ export function AllocationCard({ allocation }: { allocation: AllocationSlice[] }
               </span>
               <span className="tabular-nums">
                 {percent.format(slice.percentage)}%
-                <span className="text-muted-foreground ml-2 text-xs">{formatMoney(slice.currentValue)}</span>
+                <span className="text-muted-foreground ml-2 text-xs"><Money value={slice.currentValue} /></span>
               </span>
             </div>
             <div

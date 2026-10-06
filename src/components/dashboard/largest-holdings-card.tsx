@@ -3,6 +3,7 @@
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { Money } from "@/components/currency/money";
 import { SecurityLabel } from "@/components/dashboard/security-label";
 import { SignedValue } from "@/components/shared/signed-value";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatMoney, formatMoneyChange, formatPercentage } from "@/lib/format/number";
+import { formatPercentage } from "@/lib/format/number";
 import type { HoldingPerformance } from "@/lib/portfolio/analytics/dashboard";
 import { cn } from "@/lib/utils";
 
@@ -94,9 +95,9 @@ export function LargestHoldingsCard({ holdings }: { holdings: HoldingPerformance
               <TableCell className="max-w-64 pl-4">
                 <SecurityLabel securityId={h.securityId} name={h.name} ticker={h.ticker} type={h.type} />
               </TableCell>
-              <TableCell className="text-right tabular-nums">{formatMoney(h.currentValue)}</TableCell>
+              <TableCell className="text-right tabular-nums"><Money value={h.currentValue} /></TableCell>
               <TableCell className="text-right tabular-nums">
-                <SignedValue value={h.pnlAmount}>{formatMoneyChange(h.pnlAmount)}</SignedValue>
+                <SignedValue value={h.pnlAmount}><Money value={h.pnlAmount} change /></SignedValue>
               </TableCell>
               <TableCell className="text-right tabular-nums">
                 <SignedValue value={h.pnlPercentage}>{formatPercentage(h.pnlPercentage)}</SignedValue>
