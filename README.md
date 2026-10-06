@@ -65,15 +65,13 @@ createdb portfolio_tracker
 # 4. Apply migrations and generate the Prisma client
 npm run db:migrate
 
-# 5. Create the local account and development profiles
-npm run db:seed
-
-# 6. Start the application
+# 5. Start the application
 npm run dev
 ```
 
 The app runs at [http://localhost:3000](http://localhost:3000) and redirects to
-`/dashboard`.
+`/dashboard`. The database starts empty: create a profile under
+**Settings → Profile**, then import a Tickertape CSV.
 
 ## Environment variables
 
@@ -94,7 +92,6 @@ live in `prisma.config.ts` (Prisma 7 no longer reads the URL from the schema).
 npm run db:migrate    # create and apply a migration in development
 npm run db:deploy     # apply existing migrations (CI/production)
 npm run db:generate   # regenerate the Prisma client
-npm run db:seed       # insert development profiles, securities and snapshots (idempotent)
 npm run db:studio     # browse the data
 ```
 
@@ -188,8 +185,8 @@ user's own profiles on every request, and resolved once per request in
 `src/lib/profiles/profile-context.ts`. Pages take the profile id from that context
 rather than from the URL, so a crafted link cannot widen the data scope.
 
-Version 1 has no login. `src/lib/auth/current-user.ts` resolves the single seeded
-local account and is the one place to change when authentication is added.
+Version 1 has no login. `src/lib/auth/current-user.ts` resolves the single local
+account (created on first use) and is the one place to change when authentication is added.
 
 PAN is treated as sensitive: it is excluded from the default profile queries,
 never logged, and rendered masked as `ABCDE****F`.
@@ -197,7 +194,7 @@ never logged, and rendered masked as `ABCDE****F`.
 ## Project structure
 
 ```text
-prisma/                 schema, migrations, seed
+prisma/                 schema, migrations
 src/
   app/
     (app)/              shell layout, routes, error and loading boundaries
