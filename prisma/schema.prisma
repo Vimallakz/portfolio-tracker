@@ -1,0 +1,55 @@
+// Portfolio Intelligence Tracker — database schema
+//
+// Phase 1 defines only the ownership boundary: a User owns Profiles, and every
+// profile-scoped record added in later phases hangs off Profile.id. Securities,
+// snapshots, holdings, tags and research arrive in Phase 2.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Account owner. Version 1 has no login, so a single local user row is seeded
+/// and every profile belongs to it. This keeps the ownership chain in place for
+/// when real authentication is added.
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profiles Profile[]
+
+  @@map("users")
+}
+
+/// An investment profile (for example "Vimal" or "Wife"). This is the scope
+/// boundary for all portfolio data: never read a profile's rows without
+/// filtering on profileId.
+model Profile {
+  id     String @id @default(cuid())
+  userId String
+
+  name  String
+  email String?
+  phone String?
+  notes String?
+
+  /// Sensitive. Never select into a default query, never log, and render masked
+  /// in the UI via maskPan().
+  panNumber String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("profiles")
+}
