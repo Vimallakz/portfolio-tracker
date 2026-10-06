@@ -2,6 +2,7 @@
 
 import { AlertTriangle, Info } from "lucide-react";
 
+import { SignedValue as Signed, SIGNED_TEXT_CLASS } from "@/components/shared/signed-value";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,12 +35,6 @@ type ImportPreviewProps = {
   onCancel: () => void;
 };
 
-const SIGNED_TEXT: Record<Signedness, string> = {
-  positive: "text-positive",
-  negative: "text-negative",
-  neutral: "text-muted-foreground",
-};
-
 const STATUS_LABEL: Record<HoldingChangeStatus, string> = {
   NEW: "New",
   INCREASED: "Increased",
@@ -63,10 +58,6 @@ function formatQuantityChange(value: number | null): string {
   return `${value > 0 ? "+" : value < 0 ? "-" : "±"}${formatQuantity(Math.abs(value))}`;
 }
 
-function Signed({ value, children }: { value: number | null; children: React.ReactNode }) {
-  return <span className={SIGNED_TEXT[signednessOf(value)]}>{children}</span>;
-}
-
 function Stat({ label, value, tone }: { label: string; value: React.ReactNode; tone?: Signedness | "warning" }) {
   return (
     <div className="rounded-lg border px-3 py-2.5">
@@ -74,7 +65,7 @@ function Stat({ label, value, tone }: { label: string; value: React.ReactNode; t
       <dd
         className={cn(
           "mt-0.5 text-lg font-semibold tabular-nums",
-          tone === "warning" ? "text-warning" : tone ? SIGNED_TEXT[tone] : null,
+          tone === "warning" ? "text-warning" : tone ? SIGNED_TEXT_CLASS[tone] : null,
         )}
       >
         {value}

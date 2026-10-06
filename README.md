@@ -16,15 +16,16 @@ The application keeps three kinds of information strictly separate:
 
 ## Status
 
-Phases 1–3 are complete: application shell, multi-profile support, the full
-portfolio data model, and Tickertape CSV import with preview and confirmation.
+Phases 1–4 are complete: application shell, multi-profile support, the full
+portfolio data model, Tickertape CSV import with preview and confirmation, and
+the portfolio dashboard.
 
 | Phase | Scope | State |
 | ----- | ----- | ----- |
 | 1 | Next.js, Tailwind, shadcn/ui, Prisma, layout, profile selector, theme | Done |
 | 2 | Security, Tag, Snapshot, Holding and Research models | Done |
 | 3 | CSV upload, parsing, column mapping, security resolution, import preview | Done |
-| 4 | Dashboard summary, allocation, performers, value chart | Not started |
+| 4 | Dashboard summary, allocation, performers, value chart | Done |
 | 5 | Security detail page and research editing | Not started |
 | 6 | Snapshot history and comparison | Not started |
 | 7 | Focus dashboard | Not started |
@@ -42,8 +43,9 @@ explaining what is coming, rather than placeholder data.
 - **Zod** for validation, **React Hook Form** for forms
 - **Vitest** for unit tests
 - **next-themes** for dark/light mode
+- **Recharts** for the portfolio history chart, **decimal.js** for exact money arithmetic
 
-Charts (Recharts) and tables (TanStack Table) arrive with the phases that need them.
+TanStack Table arrives with the securities list.
 
 ## Local setup
 
@@ -135,6 +137,22 @@ later; until then the security simply has no Tickertape link.
 `fixtures/tickertape-sample.csv` is the reference export used by the importer
 tests.
 
+## Dashboard
+
+`/dashboard` reads the active profile's snapshots and shows the latest one:
+total invested, current value, portfolio return (P&L and P&L % on invested),
+stock vs ETF allocation, top and worst performers, largest holdings by weight, a
+history chart with one point per snapshot (current value, invested and P&L as
+selectable series), and what changed since the previous snapshot.
+
+The All / Stocks / ETFs filter (`?type=stock|etf`) narrows every figure except
+allocation, which always describes the whole portfolio. Top performers only
+list holdings in profit and worst performers only holdings at a loss. Because
+snapshots are monthly, changes are labelled "since previous snapshot", and the
+value change includes money added or withdrawn rather than claiming a market
+return. All figures come from `buildDashboard()` in
+`src/lib/portfolio/analytics/dashboard.ts`, which is pure and unit-tested.
+
 ## Scripts
 
 ```bash
@@ -185,6 +203,7 @@ src/
     (app)/              shell layout, routes, error and loading boundaries
     layout.tsx          root layout, fonts, theme and toast providers
   components/
+    dashboard/          summary, value chart, allocation, performers, holdings
     import/             CSV uploader, import preview and flow
     layout/             sidebar, header, profile selector, theme toggle
     profiles/           profile form and settings
@@ -196,10 +215,11 @@ src/
     db/                 Prisma client singleton
     format/             money, percentage and quantity formatting
     portfolio/
-      analytics/        shared P&L, weight and change calculations
+      analytics/        shared P&L, weight and change calculations; dashboard figures
       comparison/       snapshot-to-snapshot comparison
       importer/         CSV parsing, column mapping, validation, import service and actions
       securities/       ticker validation, Tickertape URL, name normalisation, type guess
+      snapshots/        profile-scoped snapshot queries
     profiles/           profile queries, actions, schema, PAN helpers
     env.ts              validated server environment
   generated/prisma/     generated Prisma client (not committed)
