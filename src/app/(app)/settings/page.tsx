@@ -1,4 +1,4 @@
-import { ChevronRight, Tags, UserRound } from "lucide-react";
+import { ChevronRight, IndianRupee, Tags, UserRound } from "lucide-react";
 import Link from "next/link";
 
 import { PageHeader } from "@/components/shared/page-header";
@@ -18,6 +18,12 @@ const sections = [
     description: "Custom tags used to classify securities.",
     href: "/settings/tags",
     icon: Tags,
+  },
+  {
+    title: "Currency",
+    description: "USD to INR rate used when showing amounts in rupees.",
+    href: "/settings/currency",
+    icon: IndianRupee,
   },
 ];
 

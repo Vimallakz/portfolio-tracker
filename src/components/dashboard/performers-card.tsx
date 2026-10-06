@@ -1,7 +1,8 @@
+import { Money } from "@/components/currency/money";
 import { SecurityLabel } from "@/components/dashboard/security-label";
 import { SignedValue } from "@/components/shared/signed-value";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatMoneyChange, formatPercentage } from "@/lib/format/number";
+import { formatPercentage } from "@/lib/format/number";
 import type { HoldingPerformance } from "@/lib/portfolio/analytics/dashboard";
 
 type PerformersCardProps = {
@@ -31,7 +32,7 @@ export function PerformersCard({ title, description, emptyMessage, performers }:
                     {formatPercentage(p.pnlPercentage)}
                   </SignedValue>
                   <SignedValue value={p.pnlAmount} className="block text-xs">
-                    {formatMoneyChange(p.pnlAmount)}
+                    <Money value={p.pnlAmount} change />
                   </SignedValue>
                 </div>
               </li>

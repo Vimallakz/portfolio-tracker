@@ -3,6 +3,7 @@
 import { AlertTriangle, Info } from "lucide-react";
 import { useState } from "react";
 
+import { Money } from "@/components/currency/money";
 import { HoldingStatusBadge } from "@/components/shared/holding-status-badge";
 import { SignedValue as Signed, SIGNED_TEXT_CLASS } from "@/components/shared/signed-value";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -19,8 +20,6 @@ import {
 } from "@/components/ui/table";
 import { formatSnapshotDate as formatDate } from "@/lib/format/date";
 import {
-  formatMoney,
-  formatMoneyChange,
   formatPercentage,
   formatQuantity,
   formatQuantityChange,
@@ -151,24 +150,24 @@ function HoldingRow({ holding, tickerInput }: { holding: PreviewHolding; tickerI
         )}
       </TableCell>
       <TableCell className="text-right tabular-nums">
-        <div>{formatMoney(toNumber(current?.investedAmount))}</div>
+        <div><Money value={toNumber(current?.investedAmount)} /></div>
         {holding.changes && toNumber(holding.changes.investedAmount) ? (
-          <div className="text-muted-foreground text-xs">{formatMoneyChange(toNumber(holding.changes.investedAmount))}</div>
+          <div className="text-muted-foreground text-xs"><Money value={toNumber(holding.changes.investedAmount)} change /></div>
         ) : null}
       </TableCell>
       <TableCell className="text-right tabular-nums">
-        <div>{formatMoney(toNumber(current?.currentValue))}</div>
+        <div><Money value={toNumber(current?.currentValue)} /></div>
         {holding.changes && toNumber(holding.changes.currentValue) ? (
           <div className="text-xs">
             <Signed value={toNumber(holding.changes.currentValue)}>
-              {formatMoneyChange(toNumber(holding.changes.currentValue))}
+              <Money value={toNumber(holding.changes.currentValue)} change />
             </Signed>
           </div>
         ) : null}
       </TableCell>
       <TableCell className="text-right tabular-nums">
         <div>
-          <Signed value={pnl}>{formatMoneyChange(pnl)}</Signed>
+          <Signed value={pnl}><Money value={pnl} change /></Signed>
         </div>
         <div className="text-xs">
           <Signed value={pnl}>{formatPercentage(toNumber(current?.pnlPercentage))}</Signed>
@@ -207,9 +206,9 @@ export function ImportPreview({ preview, isPending, onConfirm, onCancel }: Impor
         </CardHeader>
         <CardContent className="grid gap-5">
           <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Stat label="Invested" value={formatMoney(toNumber(totals.investedAmount))} />
-            <Stat label="Current value" value={formatMoney(toNumber(totals.currentValue))} />
-            <Stat label="P&L" value={formatMoneyChange(pnl)} tone={signednessOf(pnl)} />
+            <Stat label="Invested" value={<Money value={toNumber(totals.investedAmount)} />} />
+            <Stat label="Current value" value={<Money value={toNumber(totals.currentValue)} />} />
+            <Stat label="P&L" value={<Money value={pnl} change />} tone={signednessOf(pnl)} />
             <Stat label="P&L %" value={formatPercentage(toNumber(totals.pnlPercentage))} tone={signednessOf(pnl)} />
           </dl>
           <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">

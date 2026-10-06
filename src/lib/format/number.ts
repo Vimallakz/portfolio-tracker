@@ -15,6 +15,9 @@ function isRenderable(value: number | null | undefined): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }
 
+/** Rupees use Indian digit grouping (₹1,23,456.78). */
+const localeFor = (currency: string) => (currency === "INR" ? "en-IN" : DEFAULT_LOCALE);
+
 export function formatMoney(
   value: number | null | undefined,
   currency: string = DEFAULT_CURRENCY,
@@ -23,11 +26,28 @@ export function formatMoney(
     return PLACEHOLDER;
   }
 
-  return new Intl.NumberFormat(DEFAULT_LOCALE, {
+  return new Intl.NumberFormat(localeFor(currency), {
     style: "currency",
     currency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
+  }).format(value);
+}
+
+/** Short form for chart axes: $1.2K, ₹1.2L. */
+export function formatCompactMoney(
+  value: number | null | undefined,
+  currency: string = DEFAULT_CURRENCY,
+): string {
+  if (!isRenderable(value)) {
+    return PLACEHOLDER;
+  }
+
+  return new Intl.NumberFormat(localeFor(currency), {
+    style: "currency",
+    currency,
+    notation: "compact",
+    maximumFractionDigits: 1,
   }).format(value);
 }
 

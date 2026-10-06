@@ -1,6 +1,7 @@
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 
+import { Money } from "@/components/currency/money";
 import { SignedValue } from "@/components/shared/signed-value";
 import { Card } from "@/components/ui/card";
 import {
@@ -12,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatSnapshotDate } from "@/lib/format/date";
-import { formatMoney, formatMoneyChange, formatPercentage } from "@/lib/format/number";
+import { formatPercentage } from "@/lib/format/number";
 import type { HistoryEntry, HoldingChangeCounts } from "@/lib/portfolio/history/history";
 
 function ChangeSummary({ changes }: { changes: HoldingChangeCounts | null }) {
@@ -61,18 +62,18 @@ export function HistoryTable({ entries }: { entries: HistoryEntry[] }) {
                 ) : null}
               </TableCell>
               <TableCell className="text-right tabular-nums">{entry.totals.holdingCount}</TableCell>
-              <TableCell className="text-right tabular-nums">{formatMoney(entry.totals.investedAmount)}</TableCell>
+              <TableCell className="text-right tabular-nums"><Money value={entry.totals.investedAmount} /></TableCell>
               <TableCell className="text-right tabular-nums">
-                <div>{formatMoney(entry.totals.currentValue)}</div>
+                <div><Money value={entry.totals.currentValue} /></div>
                 {entry.valueChange !== null ? (
                   <div className="text-xs">
-                    <SignedValue value={entry.valueChange}>{formatMoneyChange(entry.valueChange)}</SignedValue>
+                    <SignedValue value={entry.valueChange}><Money value={entry.valueChange} change /></SignedValue>
                   </div>
                 ) : null}
               </TableCell>
               <TableCell className="text-right tabular-nums">
                 <SignedValue value={entry.totals.pnlAmount} className="block">
-                  {formatMoneyChange(entry.totals.pnlAmount)}
+                  <Money value={entry.totals.pnlAmount} change />
                 </SignedValue>
                 <SignedValue value={entry.totals.pnlAmount} className="block text-xs">
                   {formatPercentage(entry.totals.pnlPercentage)}

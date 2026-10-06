@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   CartesianGrid,
   Line,
@@ -11,9 +11,11 @@ import {
   YAxis,
 } from "recharts";
 
+import { useCurrency } from "@/components/currency/currency-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatMoney } from "@/lib/format/number";
+import { convertFromUsd, type DisplayCurrency } from "@/lib/currency/currency";
+import { formatCompactMoney, formatMoney } from "@/lib/format/number";
 import type { HistoryPoint } from "@/lib/portfolio/analytics/dashboard";
 
 type SeriesKey = "currentValue" | "investedAmount" | "pnlAmount";
@@ -26,18 +28,22 @@ const SERIES: { key: SeriesKey; label: string; color: string; dashed?: boolean }
 
 const axisDate = new Intl.DateTimeFormat("en-US", { month: "short", year: "2-digit", timeZone: "UTC" });
 const tooltipDate = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "UTC" });
-const compactMoney = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  notation: "compact",
-  maximumFractionDigits: 1,
-});
 
 const toDate = (isoDate: string) => new Date(`${isoDate}T00:00:00Z`);
 
 type TooltipEntry = { dataKey?: unknown; value?: unknown };
 
-function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: TooltipEntry[]; label?: unknown }) {
+function ChartTooltip({
+  active,
+  payload,
+  label,
+  currency,
+}: {
+  active?: boolean;
+  payload?: TooltipEntry[];
+  label?: unknown;
+  currency: DisplayCurrency;
+}) {
   if (!active || !payload?.length || typeof label !== "string") {
     return null;
   }
@@ -52,7 +58,7 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
         return (
           <p key={series.key} className="flex justify-between gap-4 tabular-nums">
             <span className="text-muted-foreground">{series.label}</span>
-            <span>{formatMoney(typeof entry.value === "number" ? entry.value : null)}</span>
+            <span>{formatMoney(typeof entry.value === "number" ? entry.value : null, currency)}</span>
           </p>
         );
       })}
@@ -71,6 +77,17 @@ export function PortfolioValueChart({
   title = "Portfolio history",
   description = "One point per uploaded snapshot. Values between snapshots are not tracked.",
 }: PortfolioValueChartProps) {
+  const { currency, rate } = useCurrency();
+  const data = useMemo(
+    () =>
+      history.map((point) => ({
+        snapshotDate: point.snapshotDate,
+        currentValue: convertFromUsd(point.currentValue, currency, rate),
+        investedAmount: convertFromUsd(point.investedAmount, currency, rate),
+        pnlAmount: convertFromUsd(point.pnlAmount, currency, rate),
+      })),
+    [history, currency, rate],
+  );
   const [visible, setVisible] = useState<Record<SeriesKey, boolean>>({
     currentValue: true,
     investedAmount: true,
@@ -120,7 +137,7 @@ export function PortfolioValueChart({
 
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={history} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+            <LineChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
               <XAxis
                 dataKey="snapshotDate"
@@ -131,13 +148,13 @@ export function PortfolioValueChart({
                 minTickGap={24}
               />
               <YAxis
-                tickFormatter={(value: number) => compactMoney.format(value)}
+                tickFormatter={(value: number) => formatCompactMoney(value, currency)}
                 tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
                 tickLine={false}
                 axisLine={false}
                 width={56}
               />
-              <Tooltip content={<ChartTooltip />} />
+              <Tooltip content={<ChartTooltip currency={currency} />} />
               {SERIES.filter((series) => visible[series.key]).map((series) => (
                 <Line
                   key={series.key}

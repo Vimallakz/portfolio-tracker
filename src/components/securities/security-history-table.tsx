@@ -1,3 +1,4 @@
+import { Money } from "@/components/currency/money";
 import { SignedValue } from "@/components/shared/signed-value";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -9,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatSnapshotDate } from "@/lib/format/date";
-import { formatMoney, formatMoneyChange, formatPercentage, formatQuantity } from "@/lib/format/number";
+import { formatPercentage, formatQuantity } from "@/lib/format/number";
 import type { SecurityHistoryRow } from "@/lib/portfolio/securities/queries";
 
 function formatQuantityChange(change: number): string {
@@ -50,13 +51,13 @@ export function SecurityHistoryTable({ history }: { history: SecurityHistoryRow[
                   </div>
                 ) : null}
               </TableCell>
-              <TableCell className="text-right tabular-nums">{formatMoney(row.averageBuyPrice)}</TableCell>
-              <TableCell className="text-right tabular-nums">{formatMoney(row.currentPrice)}</TableCell>
-              <TableCell className="text-right tabular-nums">{formatMoney(row.investedAmount)}</TableCell>
-              <TableCell className="text-right tabular-nums">{formatMoney(row.currentValue)}</TableCell>
+              <TableCell className="text-right tabular-nums"><Money value={row.averageBuyPrice} /></TableCell>
+              <TableCell className="text-right tabular-nums"><Money value={row.currentPrice} /></TableCell>
+              <TableCell className="text-right tabular-nums"><Money value={row.investedAmount} /></TableCell>
+              <TableCell className="text-right tabular-nums"><Money value={row.currentValue} /></TableCell>
               <TableCell className="pr-4 text-right tabular-nums">
                 <div>
-                  <SignedValue value={row.pnlAmount}>{formatMoneyChange(row.pnlAmount)}</SignedValue>
+                  <SignedValue value={row.pnlAmount}><Money value={row.pnlAmount} change /></SignedValue>
                 </div>
                 <div className="text-xs">
                   <SignedValue value={row.pnlAmount}>{formatPercentage(row.pnlPercentage)}</SignedValue>

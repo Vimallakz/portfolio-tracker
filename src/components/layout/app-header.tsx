@@ -1,6 +1,7 @@
 import { Settings } from "lucide-react";
 import Link from "next/link";
 
+import { CurrencyToggle } from "@/components/currency/currency-toggle";
 import { AppLogo } from "@/components/layout/app-logo";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { ProfileSelector } from "@/components/layout/profile-selector";
@@ -23,6 +24,7 @@ export function AppHeader({ profiles, activeProfile }: AppHeaderProps) {
       </div>
 
       <div className="ml-auto flex items-center gap-2">
+        <CurrencyToggle />
         <ProfileSelector profiles={profiles} activeProfile={activeProfile} />
         <ThemeToggle />
         <Button variant="ghost" size="icon" asChild aria-label="Settings">

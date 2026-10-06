@@ -1,3 +1,4 @@
+import { Money } from "@/components/currency/money";
 import { SignedValue } from "@/components/shared/signed-value";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -9,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatSnapshotDate } from "@/lib/format/date";
-import { formatMoney, formatMoneyChange, formatPercentage } from "@/lib/format/number";
+import { formatPercentage } from "@/lib/format/number";
 import type { ComparisonSummary } from "@/lib/portfolio/comparison/snapshot-comparator";
 import type { SnapshotTotals } from "@/lib/portfolio/history/history";
 
@@ -20,6 +21,8 @@ type ComparisonSummaryCardProps = {
   after: SnapshotTotals;
   summary: ComparisonSummary;
 };
+
+const moneyChange = (value: number) => <Money value={value} change />;
 
 function formatPointsChange(value: number): string {
   return `${value < 0 ? "-" : "+"}${Math.abs(value).toFixed(2)} pts`;
@@ -33,25 +36,25 @@ export function ComparisonSummaryCard({ fromDate, toDate, before, after, summary
   const rows = [
     {
       label: "Current value",
-      before: formatMoney(before.currentValue),
-      after: formatMoney(after.currentValue),
+      before: <Money value={before.currentValue} />,
+      after: <Money value={after.currentValue} />,
       change: after.currentValue - before.currentValue,
-      formatChange: formatMoneyChange,
+      formatChange: moneyChange,
     },
     {
       label: "Invested",
-      before: formatMoney(before.investedAmount),
-      after: formatMoney(after.investedAmount),
+      before: <Money value={before.investedAmount} />,
+      after: <Money value={after.investedAmount} />,
       change: after.investedAmount - before.investedAmount,
-      formatChange: formatMoneyChange,
+      formatChange: moneyChange,
       neutral: true,
     },
     {
       label: "P&L",
-      before: formatMoneyChange(before.pnlAmount),
-      after: formatMoneyChange(after.pnlAmount),
+      before: <Money value={before.pnlAmount} change />,
+      after: <Money value={after.pnlAmount} change />,
       change: after.pnlAmount - before.pnlAmount,
-      formatChange: formatMoneyChange,
+      formatChange: moneyChange,
     },
     {
       label: "P&L %",

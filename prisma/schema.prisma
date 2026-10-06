@@ -55,6 +55,8 @@ model User {
   id        String   @id @default(cuid())
   email     String   @unique
   name      String?
+  /// INR per 1 USD set by the user. Null means use the daily market rate.
+  usdInrRateOverride Decimal? @db.Decimal(12, 4)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
