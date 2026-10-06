@@ -43,9 +43,9 @@ export function PortfolioImport() {
     });
   }
 
-  function handleConfirm(sessionId: string, allowDuplicate: boolean) {
+  function handleConfirm(sessionId: string, allowDuplicate: boolean, tickers: Record<string, string>) {
     startTransition(async () => {
-      const result = await confirmPortfolioImport({ sessionId, allowDuplicate });
+      const result = await confirmPortfolioImport({ sessionId, allowDuplicate, tickers });
 
       if (!result.ok) {
         toast.error(result.error);
@@ -71,7 +71,7 @@ export function PortfolioImport() {
       <ImportPreview
         preview={preview}
         isPending={isPending}
-        onConfirm={(allowDuplicate) => handleConfirm(preview.sessionId, allowDuplicate)}
+        onConfirm={(allowDuplicate, tickers) => handleConfirm(preview.sessionId, allowDuplicate, tickers)}
         onCancel={() => handleCancel(preview.sessionId)}
       />
     );

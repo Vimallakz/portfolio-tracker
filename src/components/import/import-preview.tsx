@@ -1,12 +1,14 @@
 "use client";
 
 import { AlertTriangle, Info } from "lucide-react";
+import { useState } from "react";
 
 import { SignedValue as Signed, SIGNED_TEXT_CLASS } from "@/components/shared/signed-value";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -26,12 +28,14 @@ import {
 } from "@/lib/format/number";
 import type { HoldingChangeStatus } from "@/lib/portfolio/comparison/snapshot-comparator";
 import type { ImportPreview as ImportPreviewData, PreviewHolding } from "@/lib/portfolio/importer/preview";
+import { isValidTicker, normalizeTicker } from "@/lib/portfolio/securities/ticker";
 import { cn } from "@/lib/utils";
 
 type ImportPreviewProps = {
   preview: ImportPreviewData;
   isPending: boolean;
-  onConfirm: (allowDuplicate: boolean) => void;
+  /** tickers maps preview holding keys to what the user typed, blanks included. */
+  onConfirm: (allowDuplicate: boolean, tickers: Record<string, string>) => void;
   onCancel: () => void;
 };
 
@@ -74,10 +78,36 @@ function Stat({ label, value, tone }: { label: string; value: React.ReactNode; t
   );
 }
 
-function HoldingRow({ holding }: { holding: PreviewHolding }) {
+type TickerInput = { value: string; error: string | null; onChange: (value: string) => void };
+
+const needsTicker = (holding: PreviewHolding) => holding.status !== "REMOVED" && !holding.ticker;
+
+/** Format and duplicate errors per holding key, mirroring the server's checks. */
+function tickerErrors(tickers: Record<string, string>): Record<string, string> {
+  const filled = Object.entries(tickers).filter(([, value]) => value.trim() !== "");
+  const counts = new Map<string, number>();
+
+  for (const [, value] of filled) {
+    const ticker = normalizeTicker(value);
+    counts.set(ticker, (counts.get(ticker) ?? 0) + 1);
+  }
+
+  return Object.fromEntries(
+    filled.flatMap(([key, value]) => {
+      const ticker = normalizeTicker(value);
+
+      if (!isValidTicker(ticker)) return [[key, "Letters and digits only"]];
+      if ((counts.get(ticker) ?? 0) > 1) return [[key, "Entered twice"]];
+      return [];
+    }),
+  );
+}
+
+function HoldingRow({ holding, tickerInput }: { holding: PreviewHolding; tickerInput?: TickerInput }) {
   const current = holding.next ?? holding.previous;
   const quantityChange = toNumber(holding.changes?.quantity);
   const pnl = toNumber(current?.pnlAmount);
+  const inputId = `ticker-${holding.key}`;
 
   return (
     <TableRow className={holding.status === "REMOVED" ? "text-muted-foreground" : undefined}>
@@ -87,8 +117,12 @@ function HoldingRow({ holding }: { holding: PreviewHolding }) {
         </div>
         <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
           <span>{holding.type === "ETF" ? "ETF" : "Stock"}</span>
-          <span aria-hidden="true">·</span>
-          <span>{holding.ticker ?? "No ticker"}</span>
+          {tickerInput ? null : (
+            <>
+              <span aria-hidden="true">·</span>
+              <span>{holding.ticker ?? "No ticker"}</span>
+            </>
+          )}
           {holding.isNewSecurity ? (
             <>
               <span aria-hidden="true">·</span>
@@ -96,6 +130,27 @@ function HoldingRow({ holding }: { holding: PreviewHolding }) {
             </>
           ) : null}
         </div>
+        {tickerInput ? (
+          <div className="mt-1.5 grid gap-1">
+            <Input
+              id={inputId}
+              value={tickerInput.value}
+              onChange={(event) => tickerInput.onChange(event.target.value)}
+              placeholder="Ticker (optional)"
+              aria-label={`Ticker for ${holding.name}`}
+              aria-invalid={tickerInput.error ? true : undefined}
+              aria-describedby={tickerInput.error ? `${inputId}-error` : undefined}
+              autoComplete="off"
+              maxLength={13}
+              className="h-7 w-40 uppercase placeholder:normal-case md:text-xs"
+            />
+            {tickerInput.error ? (
+              <p id={`${inputId}-error`} className="text-destructive text-xs" role="alert">
+                {tickerInput.error}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
       </TableCell>
       <TableCell>
         <Badge variant={STATUS_VARIANT[holding.status]}>{STATUS_LABEL[holding.status]}</Badge>
@@ -150,6 +205,13 @@ function HoldingRow({ holding }: { holding: PreviewHolding }) {
 export function ImportPreview({ preview, isPending, onConfirm, onCancel }: ImportPreviewProps) {
   const { summary, totals, duplicate } = preview;
   const pnl = toNumber(totals.pnlAmount);
+  const [tickers, setTickers] = useState<Record<string, string>>({});
+
+  const errors = tickerErrors(tickers);
+  const hasTickerErrors = Object.keys(errors).length > 0;
+  const stillWithoutTicker = preview.holdings.filter(
+    (h) => needsTicker(h) && (!tickers[h.key]?.trim() || errors[h.key]),
+  ).length;
 
   return (
     <div className="grid gap-5">
@@ -178,7 +240,7 @@ export function ImportPreview({ preview, isPending, onConfirm, onCancel }: Impor
             <Stat label="Removed" value={summary.removed} />
             <Stat label="Quantity increases" value={summary.increased} />
             <Stat label="Quantity decreases" value={summary.reduced} />
-            <Stat label="Without ticker" value={summary.withoutTicker} tone={summary.withoutTicker > 0 ? "warning" : undefined} />
+            <Stat label="Without ticker" value={stillWithoutTicker} tone={stillWithoutTicker > 0 ? "warning" : undefined} />
           </dl>
 
           {duplicate ? (
@@ -203,8 +265,8 @@ export function ImportPreview({ preview, isPending, onConfirm, onCancel }: Impor
                   : "Some securities have no ticker yet"}
               </AlertTitle>
               <AlertDescription>
-                They will be remembered by name for future imports. After importing, add their tickers under Securities
-                → Add tickers to enable Tickertape links.
+                They will be remembered by name for future imports. Type a ticker in the table below to save it with
+                this import, or add it later under Securities → Add tickers. Tickers enable Tickertape links.
               </AlertDescription>
             </Alert>
           ) : null}
@@ -232,7 +294,19 @@ export function ImportPreview({ preview, isPending, onConfirm, onCancel }: Impor
           </TableHeader>
           <TableBody>
             {preview.holdings.map((holding) => (
-              <HoldingRow key={holding.key} holding={holding} />
+              <HoldingRow
+                key={holding.key}
+                holding={holding}
+                tickerInput={
+                  needsTicker(holding)
+                    ? {
+                        value: tickers[holding.key] ?? "",
+                        error: errors[holding.key] ?? null,
+                        onChange: (value) => setTickers((current) => ({ ...current, [holding.key]: value })),
+                      }
+                    : undefined
+                }
+              />
             ))}
           </TableBody>
         </Table>
@@ -240,10 +314,13 @@ export function ImportPreview({ preview, isPending, onConfirm, onCancel }: Impor
 
       <Card size="sm" className="pb-0">
         <CardFooter className="justify-end gap-2">
+          {hasTickerErrors ? (
+            <p className="text-destructive mr-auto text-xs">Fix the highlighted tickers, or clear them, to continue.</p>
+          ) : null}
           <Button variant="outline" size="sm" onClick={onCancel} disabled={isPending}>
             Cancel
           </Button>
-          <Button size="sm" onClick={() => onConfirm(duplicate !== null)} disabled={isPending}>
+          <Button size="sm" onClick={() => onConfirm(duplicate !== null, tickers)} disabled={isPending || hasTickerErrors}>
             {isPending ? "Importing…" : duplicate ? "Import anyway" : "Confirm import"}
           </Button>
         </CardFooter>
