@@ -1,12 +1,21 @@
+import Link from "next/link";
+
 import type { SecurityType } from "@/generated/prisma/enums";
 
+type SecurityLabelProps = {
+  securityId: string;
+  name: string;
+  ticker: string | null;
+  type: SecurityType;
+};
+
 /** Name first, since tickers are optional until the user maps them. */
-export function SecurityLabel({ name, ticker, type }: { name: string; ticker: string | null; type: SecurityType }) {
+export function SecurityLabel({ securityId, name, ticker, type }: SecurityLabelProps) {
   return (
     <div className="min-w-0">
-      <p className="truncate text-sm font-medium" title={name}>
+      <Link href={`/securities/${securityId}`} className="block truncate text-sm font-medium hover:underline" title={name}>
         {name}
-      </p>
+      </Link>
       <p className="text-muted-foreground text-xs">
         {ticker ?? "No ticker"} · {type === "ETF" ? "ETF" : "Stock"}
       </p>

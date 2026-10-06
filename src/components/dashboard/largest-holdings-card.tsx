@@ -34,7 +34,7 @@ export function LargestHoldingsCard({ holdings }: { holdings: HoldingPerformance
           {holdings.map((h) => (
             <TableRow key={h.securityId}>
               <TableCell className="max-w-64 pl-4">
-                <SecurityLabel name={h.name} ticker={h.ticker} type={h.type} />
+                <SecurityLabel securityId={h.securityId} name={h.name} ticker={h.ticker} type={h.type} />
               </TableCell>
               <TableCell className="text-right tabular-nums">{formatMoney(h.currentValue)}</TableCell>
               <TableCell className="text-right tabular-nums">

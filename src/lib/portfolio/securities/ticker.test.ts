@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  findTickertapeUrl,
   getTickertapeUrl,
   isValidTicker,
   normalizeTicker,
@@ -37,5 +38,19 @@ describe("getTickertapeUrl", () => {
 
   it("refuses to build a URL from an invalid ticker", () => {
     expect(() => getTickertapeUrl("../admin")).toThrow();
+  });
+});
+
+describe("findTickertapeUrl", () => {
+  it("prefers the Tickertape slug over the ticker", () => {
+    expect(findTickertapeUrl({ ticker: "SPCX", tickertapeTicker: "SPACEX" })).toBe(
+      "https://www.tickertape.in/us-stocks/SPACEX",
+    );
+    expect(findTickertapeUrl({ ticker: "GRAB", tickertapeTicker: null })).toBe("https://www.tickertape.in/us-stocks/GRAB");
+  });
+
+  it("returns null with no ticker or an invalid stored value", () => {
+    expect(findTickertapeUrl({ ticker: null, tickertapeTicker: null })).toBeNull();
+    expect(findTickertapeUrl({ ticker: "../x", tickertapeTicker: null })).toBeNull();
   });
 });
