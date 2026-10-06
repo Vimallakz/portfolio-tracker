@@ -21,8 +21,8 @@ import type { HistoryPoint } from "@/lib/portfolio/analytics/dashboard";
 type SeriesKey = "currentValue" | "investedAmount" | "pnlAmount";
 
 const SERIES: { key: SeriesKey; label: string; color: string; dashed?: boolean }[] = [
-  { key: "currentValue", label: "Current value", color: "var(--foreground)" },
-  { key: "investedAmount", label: "Invested", color: "var(--muted-foreground)", dashed: true },
+  { key: "currentValue", label: "Current value", color: "var(--chart-1)" },
+  { key: "investedAmount", label: "Invested", color: "var(--chart-2)", dashed: true },
   { key: "pnlAmount", label: "P&L", color: "var(--positive)" },
 ];
 
@@ -148,6 +148,7 @@ export function PortfolioValueChart({
                 minTickGap={24}
               />
               <YAxis
+                domain={["auto", "auto"]}
                 tickFormatter={(value: number) => formatCompactMoney(value, currency)}
                 tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
                 tickLine={false}
