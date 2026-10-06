@@ -6,6 +6,7 @@ import { useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { parseFileNameDate } from "@/lib/portfolio/importer/file-name-date";
 import { cn } from "@/lib/utils";
 
 type CsvUploaderProps = {
@@ -30,11 +31,25 @@ export function CsvUploader({ isPending, onSubmit }: CsvUploaderProps) {
   const [file, setFile] = useState<File | null>(null);
   const [snapshotDate, setSnapshotDate] = useState(todayLocalIsoDate);
   const [isDragging, setIsDragging] = useState(false);
+  const [dateFromFileName, setDateFromFileName] = useState(false);
+
+  function chooseFile(next: File | null) {
+    setFile(next);
+    const detected = next ? parseFileNameDate(next.name) : null;
+    if (detected) setSnapshotDate(detected);
+    setDateFromFileName(detected !== null);
+  }
 
   function clearFile() {
-    setFile(null);
+    chooseFile(null);
     if (inputRef.current) inputRef.current.value = "";
   }
+
+  const dateDescription = dateFromFileName
+    ? "Taken from the file name. Change it if this export is for a different date."
+    : file
+      ? "No date found in the file name. Set the date this export represents."
+      : "The date this export represents. Filled in from the file name when it has one, like 12-Jul-26.";
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -53,7 +68,7 @@ export function CsvUploader({ isPending, onSubmit }: CsvUploaderProps) {
           event.preventDefault();
           setIsDragging(false);
           const dropped = event.dataTransfer.files[0];
-          if (dropped) setFile(dropped);
+          if (dropped) chooseFile(dropped);
         }}
         className={cn(
           "flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed px-6 py-12 text-center transition-colors",
@@ -88,7 +103,7 @@ export function CsvUploader({ isPending, onSubmit }: CsvUploaderProps) {
           type="file"
           accept=".csv,text/csv"
           className="sr-only"
-          onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+          onChange={(event) => chooseFile(event.target.files?.[0] ?? null)}
         />
         <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()}>
           {file ? "Choose a different CSV" : "Choose CSV"}
@@ -101,13 +116,16 @@ export function CsvUploader({ isPending, onSubmit }: CsvUploaderProps) {
           id={`${id}-date`}
           type="date"
           value={snapshotDate}
-          onChange={(event) => setSnapshotDate(event.target.value)}
+          onChange={(event) => {
+            setSnapshotDate(event.target.value);
+            setDateFromFileName(false);
+          }}
           aria-describedby={`${id}-date-description`}
           suppressHydrationWarning
           required
         />
-        <p id={`${id}-date-description`} className="text-muted-foreground text-xs">
-          The date this export represents. Tickertape files do not include one.
+        <p id={`${id}-date-description`} className="text-muted-foreground text-xs" aria-live="polite">
+          {dateDescription}
         </p>
       </div>
 
