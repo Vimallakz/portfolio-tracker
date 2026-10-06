@@ -16,14 +16,14 @@ The application keeps three kinds of information strictly separate:
 
 ## Status
 
-Phases 1 and 2 are complete: application shell, navigation, theming,
-multi-profile support, and the full portfolio data model with seed data.
+Phases 1–3 are complete: application shell, multi-profile support, the full
+portfolio data model, and Tickertape CSV import with preview and confirmation.
 
 | Phase | Scope | State |
 | ----- | ----- | ----- |
 | 1 | Next.js, Tailwind, shadcn/ui, Prisma, layout, profile selector, theme | Done |
 | 2 | Security, Tag, Snapshot, Holding and Research models | Done |
-| 3 | CSV upload, parsing, column mapping, security resolution, import preview | Not started |
+| 3 | CSV upload, parsing, column mapping, security resolution, import preview | Done |
 | 4 | Dashboard summary, allocation, performers, value chart | Not started |
 | 5 | Security detail page and research editing | Not started |
 | 6 | Snapshot history and comparison | Not started |
@@ -110,6 +110,31 @@ query through `Security.tags` must also filter on the tag's `profileId`.
 The Tickertape link is not stored. `getTickertapeUrl()` in
 `src/lib/portfolio/securities/ticker.ts` builds it from a validated ticker.
 
+## CSV import
+
+`/import` takes a Tickertape CSV export and a snapshot date (the export does not
+contain one), and runs in two steps:
+
+1. **Preview.** The file is validated and parsed, columns are matched by
+   normalised header name (so order and spelling variants do not matter), and the
+   result is compared with the previous snapshot. The parsed holdings are parked
+   in an `ImportSession`; nothing else is written.
+2. **Confirm.** In one transaction, securities seen for the first time are
+   created and remembered by name, and a new immutable snapshot is written. If
+   anything fails, nothing is saved.
+
+Required columns are Stock Name, Quantity, Average Buy Price and LTP (current
+price). Invested amount, current value, weight, P&L and P&L % are taken from the
+file when present and calculated otherwise. Uploading identical content, or a
+second file for the same date, shows a duplicate warning before importing.
+
+Tickertape exports carry names, not tickers, so a new security is created with
+an empty ticker and a stock/ETF type guessed from its name. Tickers can be added
+later; until then the security simply has no Tickertape link.
+
+`fixtures/tickertape-sample.csv` is the reference export used by the importer
+tests.
+
 ## Scripts
 
 ```bash
@@ -125,16 +150,17 @@ npm run test:watch    # run unit tests in watch mode
 ## Testing
 
 Unit tests live beside the code they cover as `*.test.ts` and run on Node via
-Vitest. They cover the pure logic that exists so far: PAN masking and
-validation, display formatting, navigation matching, ticker validation and
-Tickertape URL generation, and security name normalisation.
+Vitest. They cover PAN handling, formatting, navigation, ticker validation and
+Tickertape URLs, P&L and weight calculations, CSV parsing, column mapping, row
+validation (including the sample Tickertape export), snapshot comparison
+(new, removed, increased and reduced holdings), duplicate-content hashing and
+security type detection.
 
 ```bash
 npm test
 ```
 
-Business-logic tests for CSV parsing, column mapping, P&L calculation and snapshot
-comparison arrive with Phases 3 and 4. Playwright end-to-end tests arrive in Phase 8.
+Playwright end-to-end tests arrive in Phase 8.
 
 ## Multi-profile model
 
@@ -159,6 +185,7 @@ src/
     (app)/              shell layout, routes, error and loading boundaries
     layout.tsx          root layout, fonts, theme and toast providers
   components/
+    import/             CSV uploader, import preview and flow
     layout/             sidebar, header, profile selector, theme toggle
     profiles/           profile form and settings
     shared/             page header, empty state
@@ -169,7 +196,10 @@ src/
     db/                 Prisma client singleton
     format/             money, percentage and quantity formatting
     portfolio/
-      securities/       ticker validation, Tickertape URL, name normalisation
+      analytics/        shared P&L, weight and change calculations
+      comparison/       snapshot-to-snapshot comparison
+      importer/         CSV parsing, column mapping, validation, import service and actions
+      securities/       ticker validation, Tickertape URL, name normalisation, type guess
     profiles/           profile queries, actions, schema, PAN helpers
     env.ts              validated server environment
   generated/prisma/     generated Prisma client (not committed)

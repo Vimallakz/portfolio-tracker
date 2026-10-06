@@ -99,7 +99,9 @@ model Profile {
 model Security {
   id       String       @id @default(cuid())
   name     String
-  ticker   String
+  /// Null until the user maps it: Tickertape CSVs carry names, not tickers.
+  /// Postgres treats NULLs as distinct, so unmapped rows never collide.
+  ticker   String?
   type     SecurityType
   exchange String?
   /// ISO 3166-1 alpha-2. MVP data is US-listed.
