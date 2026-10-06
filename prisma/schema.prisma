@@ -48,21 +48,39 @@ enum ImportSessionStatus {
   FAILED
 }
 
-/// Account owner. Version 1 has no login, so a single local user row is created
-/// on first use and every profile belongs to it. This keeps the ownership chain in place for
-/// when real authentication is added.
+/// Account owner, signed in with email and password. Every profile belongs to
+/// exactly one user.
 model User {
   id        String   @id @default(cuid())
+  /// Stored lowercased and trimmed, so lookups are case-insensitive.
   email     String   @unique
   name      String?
+  /// scrypt hash from hashPassword(). Never select into a default query.
+  passwordHash String
   /// INR per 1 USD set by the user. Null means use the daily market rate.
   usdInrRateOverride Decimal? @db.Decimal(12, 4)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   profiles Profile[]
+  sessions Session[]
 
   @@map("users")
+}
+
+/// A signed-in browser. The cookie holds a random token; only its SHA-256 is
+/// stored, so a database leak cannot be replayed as a login.
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
 }
 
 /// An investment profile (for example "Vimal" or "Wife"). This is the scope

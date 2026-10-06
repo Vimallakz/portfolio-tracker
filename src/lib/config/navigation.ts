@@ -8,6 +8,7 @@ import {
   Settings,
   Tags,
   UserRound,
+  UsersRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -43,7 +44,8 @@ export const navigation: NavGroup[] = [
   {
     title: "Settings",
     items: [
-      { title: "Profile", href: "/settings/profile", icon: UserRound },
+      { title: "Account", href: "/settings/account", icon: UserRound },
+      { title: "Investment profiles", href: "/settings/profile", icon: UsersRound },
       { title: "Settings", href: "/settings", icon: Settings },
     ],
   },
@@ -56,7 +58,7 @@ const allHrefs = navigation.flatMap((group) =>
 /**
  * Exactly one item is ever active: the longest href that the path matches. So
  * /securities/GRAB highlights Securities, and /settings/profile highlights
- * Profile without also lighting up Settings.
+ * Investment profiles without also lighting up Settings.
  */
 export function isActiveNavItem(href: string, pathname: string): boolean {
   const bestMatch = allHrefs

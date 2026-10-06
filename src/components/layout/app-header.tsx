@@ -2,19 +2,22 @@ import { Settings } from "lucide-react";
 import Link from "next/link";
 
 import { CurrencyToggle } from "@/components/currency/currency-toggle";
+import { AccountMenu } from "@/components/layout/account-menu";
 import { AppLogo } from "@/components/layout/app-logo";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { ProfileSelector } from "@/components/layout/profile-selector";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { Button } from "@/components/ui/button";
+import type { CurrentUser } from "@/lib/auth/current-user";
 import type { ProfileSummary } from "@/lib/profiles/queries";
 
 type AppHeaderProps = {
+  user: CurrentUser;
   profiles: ProfileSummary[];
   activeProfile: ProfileSummary | null;
 };
 
-export function AppHeader({ profiles, activeProfile }: AppHeaderProps) {
+export function AppHeader({ user, profiles, activeProfile }: AppHeaderProps) {
   return (
     <header className="bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-40 flex h-14 items-center gap-2 border-b px-4 backdrop-blur">
       <MobileNav />
@@ -32,6 +35,7 @@ export function AppHeader({ profiles, activeProfile }: AppHeaderProps) {
             <Settings className="size-4" />
           </Link>
         </Button>
+        <AccountMenu email={user.email} name={user.name} />
       </div>
     </header>
   );
