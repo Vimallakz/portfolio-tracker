@@ -2,6 +2,7 @@ import { Upload } from "lucide-react";
 
 import { AllocationCard } from "@/components/dashboard/allocation-card";
 import { LargestHoldingsCard } from "@/components/dashboard/largest-holdings-card";
+import { MonthlyPerformanceCard } from "@/components/dashboard/monthly-performance-card";
 import { PerformersCard } from "@/components/dashboard/performers-card";
 import { PortfolioSummary } from "@/components/dashboard/portfolio-summary";
 import { PortfolioValueChart } from "@/components/dashboard/portfolio-value-chart";
@@ -84,6 +85,8 @@ export default async function DashboardPage({
               <SincePreviousCard change={dashboard.sincePrevious} />
             </div>
           </div>
+
+          <MonthlyPerformanceCard history={dashboard.history} />
 
           <div className="grid gap-4 md:grid-cols-2">
             <PerformersCard
