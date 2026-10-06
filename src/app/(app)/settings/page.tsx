@@ -1,4 +1,4 @@
-import { ChevronRight, IndianRupee, Tags, UserRound } from "lucide-react";
+import { ChevronRight, IndianRupee, Tags, UserRound, UsersRound } from "lucide-react";
 import Link from "next/link";
 
 import { PageHeader } from "@/components/shared/page-header";
@@ -8,22 +8,28 @@ export const metadata = { title: "Settings | Portfolio Intelligence" };
 
 const sections = [
   {
-    title: "Profile",
-    description: "Names, contact details and PAN for each investment profile.",
-    href: "/settings/profile",
+    title: "Account",
+    description: "Your sign-in email and password.",
+    href: "/settings/account",
     icon: UserRound,
   },
   {
-    title: "Tags",
-    description: "Custom tags used to classify securities.",
-    href: "/settings/tags",
-    icon: Tags,
+    title: "Investment profiles",
+    description: "Names, contact details and PAN for each investment profile.",
+    href: "/settings/profile",
+    icon: UsersRound,
   },
   {
     title: "Currency",
     description: "USD to INR rate used when showing amounts in rupees.",
     href: "/settings/currency",
     icon: IndianRupee,
+  },
+  {
+    title: "Tags",
+    description: "Custom tags used to classify securities.",
+    href: "/settings/tags",
+    icon: Tags,
   },
 ];
 
