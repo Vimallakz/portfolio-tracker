@@ -5,8 +5,15 @@ import { getProfileContext } from "@/lib/profiles/profile-context";
 
 export const metadata = { title: "Import CSV | Portfolio Intelligence" };
 
-export default async function ImportPage() {
-  const { activeProfile } = await getProfileContext();
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+export default async function ImportPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const [{ date }, { activeProfile }] = await Promise.all([searchParams, getProfileContext()]);
+  const defaultSnapshotDate = typeof date === "string" && ISO_DATE.test(date) ? date : undefined;
 
   if (!activeProfile) {
     return (
@@ -27,7 +34,7 @@ export default async function ImportPage() {
         title="Import portfolio"
         description={`Upload a Tickertape CSV export for ${activeProfile.name}. Nothing is saved until you confirm the preview.`}
       />
-      <PortfolioImport key={activeProfile.id} />
+      <PortfolioImport key={`${activeProfile.id}:${defaultSnapshotDate ?? ""}`} defaultSnapshotDate={defaultSnapshotDate} />
     </>
   );
 }

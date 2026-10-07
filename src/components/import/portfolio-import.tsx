@@ -23,7 +23,7 @@ type Step =
   | { name: "preview"; preview: ImportPreviewData }
   | { name: "done"; confirmation: ImportConfirmation };
 
-export function PortfolioImport() {
+export function PortfolioImport({ defaultSnapshotDate }: { defaultSnapshotDate?: string }) {
   const [step, setStep] = useState<Step>({ name: "upload", errors: [] });
   const [isPending, startTransition] = useTransition();
 
@@ -123,7 +123,7 @@ export function PortfolioImport() {
       ) : null}
       <Card>
         <CardContent>
-          <CsvUploader isPending={isPending} onSubmit={handleUpload} />
+          <CsvUploader isPending={isPending} onSubmit={handleUpload} defaultSnapshotDate={defaultSnapshotDate} />
         </CardContent>
       </Card>
     </div>
