@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils";
 type CsvUploaderProps = {
   isPending: boolean;
   onSubmit: (file: File, snapshotDate: string) => void;
+  /** Overrides today, e.g. a month-end date when arriving from the upload reminder. */
+  defaultSnapshotDate?: string;
 };
 
 function todayLocalIsoDate(): string {
@@ -25,11 +27,11 @@ function formatFileSize(bytes: number): string {
   return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
 }
 
-export function CsvUploader({ isPending, onSubmit }: CsvUploaderProps) {
+export function CsvUploader({ isPending, onSubmit, defaultSnapshotDate }: CsvUploaderProps) {
   const id = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
-  const [snapshotDate, setSnapshotDate] = useState(todayLocalIsoDate);
+  const [snapshotDate, setSnapshotDate] = useState(() => defaultSnapshotDate ?? todayLocalIsoDate());
   const [isDragging, setIsDragging] = useState(false);
   const [dateFromFileName, setDateFromFileName] = useState(false);
 
