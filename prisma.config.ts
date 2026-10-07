@@ -7,9 +7,9 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: env("DATABASE_URL"),
-    // Pooled hosts (Neon, Supabase) cannot run migrations; DIRECT_URL bypasses
-    // the pooler. Unset on a local Postgres, where DATABASE_URL is already direct.
-    ...(process.env.DIRECT_URL ? { directUrl: env("DIRECT_URL") } : {}),
+    // This URL is only used by the Prisma CLI (migrations); the app connects via
+    // the adapter in src/lib/db/prisma.ts. Pooled hosts (Neon, Supabase) cannot
+    // run migrations, so prefer DIRECT_URL. Unset on a local Postgres.
+    url: process.env.DIRECT_URL ? env("DIRECT_URL") : env("DATABASE_URL"),
   },
 });
