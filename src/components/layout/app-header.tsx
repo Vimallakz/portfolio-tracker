@@ -22,7 +22,7 @@ type AppHeaderProps = {
 
 export function AppHeader({ user, profiles, activeProfile, uploadReminder }: AppHeaderProps) {
   return (
-    <header className="bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-40 flex h-14 items-center gap-2 border-b px-4 backdrop-blur">
+    <header className="bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-40 flex h-14 items-center gap-2 border-b px-4 backdrop-blur print:hidden">
       <MobileNav />
 
       <div className="lg:hidden">

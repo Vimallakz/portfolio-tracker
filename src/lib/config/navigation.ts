@@ -3,6 +3,7 @@ import {
   Calculator,
   Crosshair,
   FileSpreadsheet,
+  FileText,
   GitCompareArrows,
   History,
   LayoutDashboard,
@@ -30,6 +31,7 @@ export const navigation: NavGroup[] = [
     items: [
       { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
       { title: "Planner", href: "/planner", icon: Calculator },
+      { title: "Reports", href: "/reports", icon: FileText },
       { title: "Securities", href: "/securities", icon: BarChart3 },
       { title: "History", href: "/history", icon: History },
       { title: "Compare", href: "/compare", icon: GitCompareArrows },
