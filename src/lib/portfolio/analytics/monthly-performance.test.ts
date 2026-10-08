@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { HistoryPoint } from "@/lib/portfolio/analytics/dashboard";
 import {
   addMonths,
+  availableRanges,
   buildMonthlyPerformance,
   selectMonthlyRange,
 } from "@/lib/portfolio/analytics/monthly-performance";
@@ -75,10 +76,28 @@ describe("selectMonthlyRange", () => {
     expect(selectMonthlyRange(months, "ALL")[0].month).toBe("2025-11");
   });
 
-  it("pads months before the first snapshot", () => {
+  it("never starts before the first snapshot", () => {
     const year = selectMonthlyRange(months, "1Y");
 
-    expect(year).toHaveLength(12);
-    expect(year[0]).toMatchObject({ month: "2025-04", gain: null, isBaseline: false });
+    expect(year).toHaveLength(5);
+    expect(year[0]).toMatchObject({ month: "2025-11", isBaseline: true });
+  });
+});
+
+describe("availableRanges", () => {
+  it("offers only ranges shorter than the history, plus ALL", () => {
+    const months = buildMonthlyPerformance([point("2026-06-30", 1000, 1000), point("2026-10-06", 1000, 1100)]);
+
+    expect(availableRanges(months)).toEqual(["1M", "3M", "ALL"]);
+  });
+
+  it("offers YTD once the history starts before January", () => {
+    const months = buildMonthlyPerformance([point("2025-11-30", 1000, 1000), point("2026-03-31", 1000, 1100)]);
+
+    expect(availableRanges(months)).toEqual(["1M", "3M", "YTD", "ALL"]);
+  });
+
+  it("offers only ALL without history", () => {
+    expect(availableRanges([])).toEqual(["ALL"]);
   });
 });
