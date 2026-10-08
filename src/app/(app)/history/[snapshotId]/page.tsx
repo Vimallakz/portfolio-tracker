@@ -1,4 +1,4 @@
-import { ArrowLeft, GitCompareArrows } from "lucide-react";
+import { ArrowLeft, Download, GitCompareArrows } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -54,6 +54,12 @@ export default async function SnapshotPage({ params }: { params: Promise<{ snaps
                 </Link>
               </Button>
             ) : null}
+            <Button asChild size="sm" variant="outline">
+              <a href={`/history/${snapshot.id}/csv`} download>
+                <Download />
+                Download CSV
+              </a>
+            </Button>
             <DeleteSnapshotButton snapshotId={snapshot.id} label={date} holdingCount={snapshot.holdings.length} />
           </div>
         </div>

@@ -1,7 +1,8 @@
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Download } from "lucide-react";
 import Link from "next/link";
 
 import { Money } from "@/components/currency/money";
+import { DeleteSnapshotButton } from "@/components/history/delete-snapshot-button";
 import { SignedValue } from "@/components/shared/signed-value";
 import { Card } from "@/components/ui/card";
 import {
@@ -43,8 +44,8 @@ export function HistoryTable({ entries }: { entries: HistoryEntry[] }) {
             <TableHead className="text-right">Value</TableHead>
             <TableHead className="text-right">P&L</TableHead>
             <TableHead>Changes since previous</TableHead>
-            <TableHead className="w-10 pr-4">
-              <span className="sr-only">Open</span>
+            <TableHead className="w-28 pr-4">
+              <span className="sr-only">Actions</span>
             </TableHead>
           </TableRow>
         </TableHeader>
@@ -83,13 +84,30 @@ export function HistoryTable({ entries }: { entries: HistoryEntry[] }) {
                 <ChangeSummary changes={entry.changes} />
               </TableCell>
               <TableCell className="pr-4">
-                <Link
-                  href={`/history/${entry.id}`}
-                  aria-label={`Open snapshot from ${formatSnapshotDate(entry.snapshotDate)}`}
-                  className="text-muted-foreground hover:text-foreground flex justify-end"
-                >
-                  <ChevronRight className="size-4" />
-                </Link>
+                <div className="flex items-center justify-end gap-3">
+                  <a
+                    href={`/history/${entry.id}/csv`}
+                    download
+                    aria-label={`Download snapshot from ${formatSnapshotDate(entry.snapshotDate)} as CSV`}
+                    title="Download CSV"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <Download className="size-4" />
+                  </a>
+                  <DeleteSnapshotButton
+                    compact
+                    snapshotId={entry.id}
+                    label={formatSnapshotDate(entry.snapshotDate)}
+                    holdingCount={entry.totals.holdingCount}
+                  />
+                  <Link
+                    href={`/history/${entry.id}`}
+                    aria-label={`Open snapshot from ${formatSnapshotDate(entry.snapshotDate)}`}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <ChevronRight className="size-4" />
+                  </Link>
+                </div>
               </TableCell>
             </TableRow>
           ))}
