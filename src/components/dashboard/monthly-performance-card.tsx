@@ -74,9 +74,8 @@ function niceExtent(maxAbs: number): number {
 }
 
 function statusOf(entry: MonthlyPerformance): string {
-  if (entry.isBaseline) return "First snapshot";
-  if (entry.returnPercentage === null) return "No snapshot";
-  return formatPercentage(entry.returnPercentage);
+  if (entry.returnPercentage === null) return entry.isBaseline ? "First snapshot" : "No snapshot";
+  return entry.isBaseline ? `${formatPercentage(entry.returnPercentage)} on invested` : formatPercentage(entry.returnPercentage);
 }
 
 function MonthTick({ x, y, payload, months }: { x?: number; y?: number; payload?: { index: number }; months: MonthlyPerformance[] }) {
@@ -129,7 +128,9 @@ function MonthTooltip({
           </p>
           <p className={cn("tabular-nums", SIGN_TEXT[sign])}>{statusOf(entry)}</p>
           <p className="text-muted-foreground">
-            {formatSnapshotDate(entry.fromDate!)} → {formatSnapshotDate(entry.toDate!)}
+            {entry.fromDate
+              ? `${formatSnapshotDate(entry.fromDate)} → ${formatSnapshotDate(entry.toDate!)}`
+              : `First snapshot (${formatSnapshotDate(entry.toDate!)}), measured from when you started investing.`}
           </p>
         </>
       )}

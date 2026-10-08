@@ -6,7 +6,7 @@ export type EarningsSummary = {
   totalGain: number;
   /** totalGain spread over the months it covers. */
   averageMonthlyGain: number;
-  /** Compounded monthly return, 0–100 scale. Null when no measured month had a usable base. */
+  /** Money-weighted monthly return, 0–100 scale: totalGain over the money at work each month. Null without a base. */
   averageMonthlyReturn: number | null;
   /** Calendar months the measured changes cover. Can exceed the window when a change spans skipped months. */
   monthsCovered: number;
@@ -16,8 +16,10 @@ export type EarningsSummary = {
  * Market earnings over the last `windowMonths` months ending at the latest
  * month, or the whole history when `windowMonths` is null.
  *
- * The return is the geometric mean of the monthly Modified Dietz returns, so a
- * change measured across skipped months counts once per month it spans.
+ * The return is money-weighted: total gain divided by the sum of each month's
+ * base (the money at work), counting a base once per month its change spans.
+ * Its sign always matches the actual gain or loss, unlike averaging monthly
+ * percentages, where small early months count as much as large later ones.
  */
 export function summarizeEarnings(
   months: MonthlyPerformance[],
@@ -30,7 +32,7 @@ export function summarizeEarnings(
   }
 
   const start = windowMonths === null ? months[0].month : addMonths(latest, -(windowMonths - 1));
-  const measured = months.filter((entry) => entry.month >= start && entry.gain !== null && entry.fromDate !== null);
+  const measured = months.filter((entry) => entry.month >= start && entry.gain !== null);
 
   if (measured.length === 0) {
     return null;
@@ -38,25 +40,20 @@ export function summarizeEarnings(
 
   let totalGain = 0;
   let monthsCovered = 0;
-  let growth = 1;
-  let returnMonths = 0;
+  let moneyAtWork = 0;
 
   for (const entry of measured) {
-    const span = monthsBetween(monthOf(entry.fromDate!), entry.month);
+    const span = entry.fromDate ? monthsBetween(monthOf(entry.fromDate), entry.month) : 1;
 
     totalGain += entry.gain!;
     monthsCovered += span;
-
-    if (entry.returnPercentage !== null) {
-      growth *= 1 + entry.returnPercentage / 100;
-      returnMonths += span;
-    }
+    moneyAtWork += (entry.base ?? 0) * span;
   }
 
   return {
     totalGain,
     averageMonthlyGain: totalGain / monthsCovered,
-    averageMonthlyReturn: returnMonths > 0 && growth > 0 ? (growth ** (1 / returnMonths) - 1) * 100 : null,
+    averageMonthlyReturn: moneyAtWork > 0 ? (totalGain / moneyAtWork) * 100 : null,
     monthsCovered,
   };
 }

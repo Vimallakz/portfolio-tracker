@@ -4,7 +4,7 @@ import { addMonths } from "@/lib/portfolio/analytics/monthly-performance";
 export type MonthlyContribution = {
   /** "YYYY-MM". */
   month: string;
-  /** Net money added in USD (negative when more was sold than bought). Null for the baseline month. */
+  /** Net money added in USD (negative when more was sold than bought). */
   amount: number | null;
   /** True when no snapshot fell in this month, or the snapshot covers skipped months, so the amount is an even split. */
   isEstimated: boolean;
@@ -12,7 +12,7 @@ export type MonthlyContribution = {
   fromDate: string | null;
   /** Snapshot the change is measured to. */
   toDate: string | null;
-  /** The month of the very first snapshot: money invested before tracking started is unknown. */
+  /** The month of the very first snapshot. Investing is assumed to start that month, so its amount is everything invested by then. */
   isBaseline: boolean;
 };
 
@@ -55,18 +55,18 @@ export function buildMonthlyContributions(history: HistoryPoint[]): MonthlyContr
     monthEnds.set(monthOf(point.snapshotDate), point);
   }
 
+  let previous = monthEnds.get(monthOf(first.snapshotDate))!;
+
   const months: MonthlyContribution[] = [
     {
       month: monthOf(first.snapshotDate),
-      amount: null,
+      amount: previous.investedAmount,
       isEstimated: false,
       fromDate: null,
-      toDate: monthEnds.get(monthOf(first.snapshotDate))!.snapshotDate,
+      toDate: previous.snapshotDate,
       isBaseline: true,
     },
   ];
-
-  let previous = monthEnds.get(monthOf(first.snapshotDate))!;
 
   for (
     let month = addMonths(monthOf(first.snapshotDate), 1);
@@ -99,7 +99,7 @@ export function buildMonthlyContributions(history: HistoryPoint[]): MonthlyContr
   return months;
 }
 
-/** Mean of the last `windowMonths` calendar months ending at the latest month, ignoring the baseline. */
+/** Mean of the last `windowMonths` calendar months ending at the latest month. */
 export function averageContribution(months: MonthlyContribution[], windowMonths: number): ContributionAverage {
   const latest = months.at(-1)?.month;
 

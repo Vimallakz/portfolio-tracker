@@ -18,7 +18,7 @@ describe("buildMonthlyContributions", () => {
     expect(buildMonthlyContributions([])).toEqual([]);
   });
 
-  it("marks the first month as the baseline and measures later months from the previous month-end", () => {
+  it("counts everything invested by the first snapshot as its month, then measures from each month-end", () => {
     const months = buildMonthlyContributions([
       point("2026-01-31", 1000, 1000),
       point("2026-02-28", 1300, 1350),
@@ -26,7 +26,7 @@ describe("buildMonthlyContributions", () => {
     ]);
 
     expect(months.map((entry) => [entry.month, entry.amount, entry.isBaseline])).toEqual([
-      ["2026-01", null, true],
+      ["2026-01", 1000, true],
       ["2026-02", 300, false],
       ["2026-03", -50, false],
     ]);
@@ -46,7 +46,7 @@ describe("buildMonthlyContributions", () => {
     const months = buildMonthlyContributions([point("2026-01-31", 1000, 1000), point("2026-04-30", 1600, 1700)]);
 
     expect(months.map((entry) => [entry.month, entry.amount, entry.isEstimated])).toEqual([
-      ["2026-01", null, false],
+      ["2026-01", 1000, false],
       ["2026-02", 200, true],
       ["2026-03", 200, true],
       ["2026-04", 200, true],
@@ -62,43 +62,73 @@ describe("averageContribution", () => {
     point("2026-05-31", 2000, 2000),
   ]);
 
-  it("averages the trailing window and skips the baseline", () => {
+  it("averages the trailing window, including the first month", () => {
     expect(averageContribution(months, 3)).toEqual({ average: (200 + 200 + 400) / 3, monthsCounted: 3 });
-    expect(averageContribution(months, 12)).toEqual({ average: 1500 / 5, monthsCounted: 5 });
+    expect(averageContribution(months, 12)).toEqual({ average: 2000 / 6, monthsCounted: 6 });
   });
 
-  it("is null when only the baseline exists", () => {
+  it("uses the first snapshot alone", () => {
     expect(averageContribution(buildMonthlyContributions([point("2026-01-31", 1000, 1000)]), 6)).toEqual({
-      average: null,
-      monthsCounted: 0,
+      average: 1000,
+      monthsCounted: 1,
     });
+  });
+
+  it("is null without history", () => {
+    expect(averageContribution([], 6)).toEqual({ average: null, monthsCounted: 0 });
   });
 });
 
 describe("summarizeEarnings", () => {
-  it("compounds monthly returns and averages the gain", () => {
+  it("divides the total gain by the money at work each month", () => {
     const months = buildMonthlyPerformance([
       point("2026-01-31", 1000, 1000),
       point("2026-02-28", 1000, 1100),
       point("2026-03-31", 1000, 1210),
     ]);
 
-    const summary = summarizeEarnings(months, null)!;
+    // Bases: February 1000, March 1100; January (the first month) 1000 with no gain.
+    expect(summarizeEarnings(months, 2)).toMatchObject({ totalGain: 210, monthsCovered: 2 });
+    expect(summarizeEarnings(months, 2)!.averageMonthlyGain).toBeCloseTo(105);
+    expect(summarizeEarnings(months, 2)!.averageMonthlyReturn).toBeCloseTo((210 / 2100) * 100);
 
-    expect(summary.totalGain).toBeCloseTo(210);
-    expect(summary.averageMonthlyGain).toBeCloseTo(105);
-    expect(summary.averageMonthlyReturn).toBeCloseTo(10);
-    expect(summary.monthsCovered).toBe(2);
+    const allTime = summarizeEarnings(months, null)!;
+
+    expect(allTime.monthsCovered).toBe(3);
+    expect(allTime.averageMonthlyGain).toBeCloseTo(70);
+    expect(allTime.averageMonthlyReturn).toBeCloseTo((210 / 3100) * 100);
   });
 
   it("counts a change across skipped months once per month it spans", () => {
     const months = buildMonthlyPerformance([point("2026-01-31", 1000, 1000), point("2026-03-31", 1000, 1210)]);
 
-    const summary = summarizeEarnings(months, null)!;
+    const summary = summarizeEarnings(months, 2)!;
 
     expect(summary.monthsCovered).toBe(2);
     expect(summary.averageMonthlyGain).toBeCloseTo(105);
-    expect(summary.averageMonthlyReturn).toBeCloseTo(10);
+    expect(summary.averageMonthlyReturn).toBeCloseTo((210 / 2000) * 100);
+  });
+
+  it("is positive when the portfolio is up, even if most months lost", () => {
+    const months = buildMonthlyPerformance([
+      point("2026-06-30", 312.72, 300.05),
+      point("2026-07-30", 625.44, 600.09),
+      point("2026-08-30", 938.16, 900.14),
+      point("2026-09-30", 1289.52, 1310.51),
+    ]);
+
+    const summary = summarizeEarnings(months, null)!;
+
+    expect(summary.totalGain).toBeCloseTo(20.99);
+    // 20.99 / (312.72 + 456.41 + 756.45 + 1075.82)
+    expect(summary.averageMonthlyReturn).toBeCloseTo(0.8069, 3);
+  });
+
+  it("counts the first snapshot's P&L as its month", () => {
+    const summary = summarizeEarnings(buildMonthlyPerformance([point("2026-06-30", 312.72, 300.05)]), null)!;
+
+    expect(summary.totalGain).toBeCloseTo(-12.67);
+    expect(summary.averageMonthlyReturn).toBeCloseTo(-4.0515, 3);
   });
 
   it("limits to the trailing window", () => {
@@ -111,8 +141,8 @@ describe("summarizeEarnings", () => {
     expect(summarizeEarnings(months, 1)!.totalGain).toBeCloseTo(110);
   });
 
-  it("is null with nothing measured", () => {
-    expect(summarizeEarnings(buildMonthlyPerformance([point("2026-01-31", 1000, 1000)]), 6)).toBeNull();
+  it("is null without history", () => {
+    expect(summarizeEarnings([], 6)).toBeNull();
   });
 });
 

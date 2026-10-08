@@ -157,7 +157,8 @@ export default async function PlannerPage() {
               What it earns
             </h2>
             <p className="text-muted-foreground text-xs">
-              Average market gain per month for the whole portfolio, excluding money you added.
+              Average market gain per month for the whole portfolio, excluding money you added. The % is weighted by
+              how much money was invested each month, so it always agrees with your actual profit or loss.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

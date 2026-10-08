@@ -56,7 +56,12 @@ function ContributionTooltip({
     <div className="bg-popover text-popover-foreground grid max-w-64 gap-1 rounded-md border px-3 py-2 text-xs shadow-md">
       <p className="text-muted-foreground font-medium uppercase">{monthLong.format(toDate(entry.month))}</p>
       {entry.isBaseline ? (
-        <p>First snapshot. Money invested before tracking started is not split by month.</p>
+        <>
+          <p className="text-sm font-semibold tabular-nums">{moneyChange(entry.amount)}</p>
+          <p className="text-muted-foreground">
+            Everything invested by your first snapshot ({formatSnapshotDate(entry.toDate!)}), counted as this month.
+          </p>
+        </>
       ) : (
         <>
           <p className="text-sm font-semibold tabular-nums">{moneyChange(entry.amount)}</p>

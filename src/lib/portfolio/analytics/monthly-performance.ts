@@ -10,11 +10,16 @@ export type MonthlyPerformance = {
   gain: number | null;
   /** Modified Dietz return for the month, 0–100 scale. */
   returnPercentage: number | null;
+  /** Money at work the return is measured on (USD): gain / base = return. Null when not measurable. */
+  base: number | null;
   /** Snapshot the change is measured from. Can be several months earlier when months were skipped. */
   fromDate: string | null;
   /** Last snapshot of the month. */
   toDate: string | null;
-  /** The month of the very first snapshot: there is nothing earlier to compare against. */
+  /**
+   * The month of the very first snapshot. Investing is assumed to start that
+   * month, so its gain is the snapshot's P&L and fromDate is null.
+   */
   isBaseline: boolean;
 };
 
@@ -31,6 +36,7 @@ const emptyMonth = (month: string): MonthlyPerformance => ({
   month,
   gain: null,
   returnPercentage: null,
+  base: null,
   fromDate: null,
   toDate: null,
   isBaseline: false,
@@ -45,6 +51,9 @@ const emptyMonth = (month: string): MonthlyPerformance => ({
  * money added (Modified Dietz), which assumes flows landed mid-period.
  * Snapshots are sparse, so a month with no snapshot is empty and the next
  * month with one carries the whole change since the last snapshot.
+ *
+ * The first month is measured from zero, as if investing started that month:
+ * its gain is the snapshot's P&L and its return is P&L over invested amount.
  */
 export function buildMonthlyPerformance(history: HistoryPoint[]): MonthlyPerformance[] {
   const first = history[0];
@@ -71,7 +80,14 @@ export function buildMonthlyPerformance(history: HistoryPoint[]): MonthlyPerform
     }
 
     if (!previous) {
-      months.push({ ...emptyMonth(month), toDate: point.snapshotDate, isBaseline: true });
+      months.push({
+        ...emptyMonth(month),
+        gain: point.pnlAmount,
+        returnPercentage: point.investedAmount > 0 ? (point.pnlAmount / point.investedAmount) * 100 : null,
+        base: point.investedAmount > 0 ? point.investedAmount : null,
+        toDate: point.snapshotDate,
+        isBaseline: true,
+      });
     } else {
       const gain = point.pnlAmount - previous.pnlAmount;
       const netFlow = point.investedAmount - previous.investedAmount;
@@ -81,6 +97,7 @@ export function buildMonthlyPerformance(history: HistoryPoint[]): MonthlyPerform
         month,
         gain,
         returnPercentage: base > 0 ? (gain / base) * 100 : null,
+        base: base > 0 ? base : null,
         fromDate: previous.snapshotDate,
         toDate: point.snapshotDate,
         isBaseline: false,
