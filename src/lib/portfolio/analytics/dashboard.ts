@@ -79,11 +79,19 @@ export type HistoryPoint = {
 
 export type SincePrevious = {
   previousSnapshotDate: string;
+  currentSnapshotDate: string;
+  previousValue: number;
+  currentValue: number;
+  /** Includes new money, so it is not a return. */
   currentValueChange: number;
-  /** Change in value relative to the previous snapshot's value. Includes new money. */
-  currentValueChangePercentage: number;
+  /** Net money added (negative when withdrawn). */
   investedAmountChange: number;
+  previousPnlAmount: number;
+  currentPnlAmount: number;
+  /** Market gain or loss: the change in P&L, which excludes new money. */
   pnlAmountChange: number;
+  /** pnlAmountChange over the previous value plus half the money added (Modified Dietz), 0–100 scale. Null without a base. */
+  marketReturnPercentage: number | null;
   newHoldings: number;
   removedHoldings: number;
   increasedHoldings: number;
@@ -223,16 +231,21 @@ export function calculateSincePrevious(previous: SnapshotRow, latest: SnapshotRo
   const before = totalsOf(previous.holdings);
   const after = totalsOf(latest.holdings);
   const { summary } = compareSnapshots(previous.holdings.map(toComparable), latest.holdings.map(toComparable));
-  const valueChange = calculateChange(before.currentValue, after.currentValue);
+  const investedChange = calculateChange(before.investedAmount, after.investedAmount);
+  const pnlChange = calculateChange(before.pnlAmount, after.pnlAmount);
+  const base = before.currentValue.add(investedChange.div(2));
 
   return {
     previousSnapshotDate: previous.snapshotDate,
-    currentValueChange: toNumber(valueChange),
-    currentValueChangePercentage: before.currentValue.isZero()
-      ? 0
-      : toNumber(valueChange.div(before.currentValue).mul(100)),
-    investedAmountChange: toNumber(calculateChange(before.investedAmount, after.investedAmount)),
-    pnlAmountChange: toNumber(calculateChange(before.pnlAmount, after.pnlAmount)),
+    currentSnapshotDate: latest.snapshotDate,
+    previousValue: toNumber(before.currentValue),
+    currentValue: toNumber(after.currentValue),
+    currentValueChange: toNumber(calculateChange(before.currentValue, after.currentValue)),
+    investedAmountChange: toNumber(investedChange),
+    previousPnlAmount: toNumber(before.pnlAmount),
+    currentPnlAmount: toNumber(after.pnlAmount),
+    pnlAmountChange: toNumber(pnlChange),
+    marketReturnPercentage: base.greaterThan(0) ? toNumber(pnlChange.div(base).mul(100)) : null,
     newHoldings: summary.new,
     removedHoldings: summary.removed,
     increasedHoldings: summary.increased,

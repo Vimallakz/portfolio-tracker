@@ -125,14 +125,20 @@ describe("buildDashboard", () => {
     ]);
     expect(data.sincePrevious).toMatchObject({
       previousSnapshotDate: "2026-08-31",
+      previousValue: 1180,
+      currentValue: 2140,
       currentValueChange: 960,
       investedAmountChange: 1000,
+      previousPnlAmount: 130,
+      currentPnlAmount: 90,
       pnlAmountChange: -40,
       newHoldings: 1,
       removedHoldings: 1,
       increasedHoldings: 1,
       reducedHoldings: 0,
     });
+    // -40 / (1180 + 1000 / 2)
+    expect(data.sincePrevious!.marketReturnPercentage).toBeCloseTo(-2.381, 3);
   });
 
   it("applies the type filter everywhere except allocation", () => {

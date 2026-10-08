@@ -81,8 +81,9 @@ export default async function DashboardPage({
           <PortfolioSummary summary={dashboard.summary} />
 
           <div className="grid gap-4 lg:grid-cols-3">
-            <div className="lg:col-span-2">
+            <div className="grid content-start gap-4 lg:col-span-2">
               <PortfolioValueChart history={dashboard.history} />
+              <MonthlyPerformanceCard history={dashboard.history} />
             </div>
             <div className="grid content-start gap-4">
               <AllocationCard allocation={dashboard.allocation} />
@@ -90,8 +91,6 @@ export default async function DashboardPage({
               {planner ? <PlannerTeaserCard planner={planner} /> : null}
             </div>
           </div>
-
-          <MonthlyPerformanceCard history={dashboard.history} />
 
           <div className="grid gap-4 md:grid-cols-2">
             <PerformersCard
