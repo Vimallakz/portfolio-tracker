@@ -1,10 +1,13 @@
 "use client";
 
+import { ChartArea, ChartColumn, ChartLine, type LucideIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
+  Area,
+  Bar,
   CartesianGrid,
+  ComposedChart,
   Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -16,7 +19,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { convertFromUsd, type DisplayCurrency } from "@/lib/currency/currency";
 import { formatCompactMoney, formatMoney } from "@/lib/format/number";
+import { useStoredChoice } from "@/lib/hooks/use-stored-choice";
 import type { HistoryPoint } from "@/lib/portfolio/analytics/dashboard";
+import { cn } from "@/lib/utils";
+
+const CHART_TYPES = ["line", "area", "bar"] as const;
+type ChartType = (typeof CHART_TYPES)[number];
+
+const CHART_TYPE_OPTIONS: { id: ChartType; label: string; icon: LucideIcon }[] = [
+  { id: "line", label: "Line", icon: ChartLine },
+  { id: "area", label: "Area", icon: ChartArea },
+  { id: "bar", label: "Bars", icon: ChartColumn },
+];
+
+const CHART_TYPE_STORAGE_KEY = "pit:portfolio-history-chart-type";
 
 type SeriesKey = "currentValue" | "investedAmount" | "pnlAmount";
 
@@ -88,6 +104,7 @@ export function PortfolioValueChart({
       })),
     [history, currency, rate],
   );
+  const [chartType, setChartType] = useStoredChoice(CHART_TYPE_STORAGE_KEY, CHART_TYPES, "line");
   const [visible, setVisible] = useState<Record<SeriesKey, boolean>>({
     currentValue: true,
     investedAmount: true,
@@ -104,9 +121,31 @@ export function PortfolioValueChart({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+      <CardHeader className="gap-3 sm:grid-cols-[1fr_auto]">
+        <div className="grid gap-1">
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </div>
+        <div className="bg-muted flex w-fit gap-0.5 rounded-lg p-0.5" role="group" aria-label="Chart type">
+          {CHART_TYPE_OPTIONS.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => setChartType(option.id)}
+              aria-pressed={chartType === option.id}
+              title={`${option.label} chart`}
+              className={cn(
+                "focus-visible:ring-ring/50 inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors outline-none focus-visible:ring-3",
+                chartType === option.id
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <option.icon className="size-3.5" aria-hidden="true" />
+              {option.label}
+            </button>
+          ))}
+        </div>
       </CardHeader>
       <CardContent className="grid gap-4">
         <div className="flex flex-wrap gap-1.5" role="group" aria-label="Chart series">
@@ -137,7 +176,7 @@ export function PortfolioValueChart({
 
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+            <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
               <XAxis
                 dataKey="snapshotDate"
@@ -148,29 +187,68 @@ export function PortfolioValueChart({
                 minTickGap={24}
               />
               <YAxis
-                domain={["auto", "auto"]}
+                domain={chartType === "line" ? ["auto", "auto"] : [(dataMin: number) => Math.min(0, dataMin), "auto"]}
                 tickFormatter={(value: number) => formatCompactMoney(value, currency)}
                 tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
                 tickLine={false}
                 axisLine={false}
                 width={56}
               />
-              <Tooltip content={<ChartTooltip currency={currency} />} />
-              {SERIES.filter((series) => visible[series.key]).map((series) => (
-                <Line
-                  key={series.key}
-                  dataKey={series.key}
-                  name={series.label}
-                  type="monotone"
-                  stroke={series.color}
-                  strokeWidth={2}
-                  strokeDasharray={series.dashed ? "4 4" : undefined}
-                  dot={{ r: 3, fill: series.color }}
-                  activeDot={{ r: 4 }}
-                  isAnimationActive={false}
-                />
-              ))}
-            </LineChart>
+              <Tooltip
+                content={<ChartTooltip currency={currency} />}
+                cursor={chartType === "bar" ? { fill: "var(--accent)", opacity: 0.5 } : undefined}
+              />
+              {SERIES.filter((series) => visible[series.key]).map((series) => {
+                if (chartType === "bar") {
+                  return (
+                    <Bar
+                      key={series.key}
+                      dataKey={series.key}
+                      name={series.label}
+                      fill={series.color}
+                      fillOpacity={series.dashed ? 0.55 : 0.9}
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={28}
+                      isAnimationActive={false}
+                    />
+                  );
+                }
+
+                if (chartType === "area") {
+                  return (
+                    <Area
+                      key={series.key}
+                      dataKey={series.key}
+                      name={series.label}
+                      type="monotone"
+                      stroke={series.color}
+                      fill={series.color}
+                      fillOpacity={0.12}
+                      strokeWidth={2}
+                      strokeDasharray={series.dashed ? "4 4" : undefined}
+                      dot={false}
+                      activeDot={{ r: 4 }}
+                      isAnimationActive={false}
+                    />
+                  );
+                }
+
+                return (
+                  <Line
+                    key={series.key}
+                    dataKey={series.key}
+                    name={series.label}
+                    type="monotone"
+                    stroke={series.color}
+                    strokeWidth={2}
+                    strokeDasharray={series.dashed ? "4 4" : undefined}
+                    dot={{ r: 3, fill: series.color }}
+                    activeDot={{ r: 4 }}
+                    isAnimationActive={false}
+                  />
+                );
+              })}
+            </ComposedChart>
           </ResponsiveContainer>
         </div>
       </CardContent>
