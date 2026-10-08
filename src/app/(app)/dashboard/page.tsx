@@ -4,6 +4,7 @@ import { AllocationCard } from "@/components/dashboard/allocation-card";
 import { LargestHoldingsCard } from "@/components/dashboard/largest-holdings-card";
 import { MonthlyPerformanceCard } from "@/components/dashboard/monthly-performance-card";
 import { PerformersCard } from "@/components/dashboard/performers-card";
+import { PlannerTeaserCard } from "@/components/dashboard/planner-teaser-card";
 import { PortfolioSummary } from "@/components/dashboard/portfolio-summary";
 import { PortfolioValueChart } from "@/components/dashboard/portfolio-value-chart";
 import { SincePreviousCard } from "@/components/dashboard/since-previous-card";
@@ -11,7 +12,8 @@ import { TypeFilter } from "@/components/dashboard/type-filter";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { formatSnapshotDate } from "@/lib/format/date";
-import { buildDashboard, parseTypeFilter } from "@/lib/portfolio/analytics/dashboard";
+import { buildDashboard, buildHistory, parseTypeFilter } from "@/lib/portfolio/analytics/dashboard";
+import { buildPlanner } from "@/lib/portfolio/planner/planner";
 import { listProfileSnapshots } from "@/lib/portfolio/snapshots/queries";
 import { getProfileContext } from "@/lib/profiles/profile-context";
 
@@ -40,7 +42,9 @@ export default async function DashboardPage({
   }
 
   const filter = parseTypeFilter((await searchParams).type);
-  const dashboard = buildDashboard(await listProfileSnapshots(activeProfile.id), filter);
+  const snapshots = await listProfileSnapshots(activeProfile.id);
+  const dashboard = buildDashboard(snapshots, filter);
+  const planner = buildPlanner(buildHistory(snapshots));
 
   if (!dashboard) {
     return (
@@ -83,6 +87,7 @@ export default async function DashboardPage({
             <div className="grid content-start gap-4">
               <AllocationCard allocation={dashboard.allocation} />
               <SincePreviousCard change={dashboard.sincePrevious} />
+              {planner ? <PlannerTeaserCard planner={planner} /> : null}
             </div>
           </div>
 
