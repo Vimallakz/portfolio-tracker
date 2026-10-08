@@ -17,3 +17,8 @@ export function parseDisplayCurrency(value: string | undefined): DisplayCurrency
 export function convertFromUsd(value: number, currency: DisplayCurrency, rate: UsdInrRate | null): number {
   return currency === "INR" && rate ? value * rate.rate : value;
 }
+
+/** Inverse of convertFromUsd, for amounts the user types in the display currency. */
+export function convertToUsd(value: number, currency: DisplayCurrency, rate: UsdInrRate | null): number {
+  return currency === "INR" && rate ? value / rate.rate : value;
+}
