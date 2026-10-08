@@ -23,10 +23,17 @@ describe("addMonths", () => {
 });
 
 describe("buildMonthlyPerformance", () => {
-  it("marks the first month as the baseline", () => {
+  it("measures the first month from zero, as if investing started then", () => {
     const [first] = buildMonthlyPerformance([point("2026-07-12", 1000, 1100)]);
 
-    expect(first).toMatchObject({ month: "2026-07", isBaseline: true, gain: null, toDate: "2026-07-12" });
+    expect(first).toMatchObject({
+      month: "2026-07",
+      isBaseline: true,
+      gain: 100,
+      returnPercentage: 10,
+      fromDate: null,
+      toDate: "2026-07-12",
+    });
   });
 
   it("measures gain without counting new money", () => {

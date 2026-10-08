@@ -40,7 +40,7 @@ export function buildPlanner(history: HistoryPoint[]): PlannerData | null {
   return {
     latest,
     contributions,
-    lastContribution: last.isBaseline ? null : last,
+    lastContribution: last,
     sixMonthContribution: averageContribution(contributions, 6),
     twelveMonthContribution: averageContribution(contributions, 12),
     earnings: {
