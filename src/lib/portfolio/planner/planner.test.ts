@@ -163,6 +163,15 @@ describe("projectInvestment", () => {
     expect(projection.totalContributed).toBeCloseTo(1200);
     expect(projection.projectedGain).toBeCloseTo(0);
     expect(projection.points).toHaveLength(13);
+    // Today's +200 profit carries through: 200 / 2000.
+    expect(projection.totalProfit).toBeCloseTo(200);
+    expect(projection.absoluteReturn).toBeCloseTo(10);
+  });
+
+  it("has no absolute return when nothing is invested", () => {
+    expect(
+      projectInvestment({ ...base, startValue: 0, startInvested: 0, monthlyContribution: 0 }).absoluteReturn,
+    ).toBeNull();
   });
 
   it("grows the balance before adding the month's investment", () => {
