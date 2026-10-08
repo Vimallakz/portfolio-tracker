@@ -21,8 +21,8 @@ import { formatSnapshotDate } from "@/lib/format/date";
 import { formatPercentage, signednessOf } from "@/lib/format/number";
 import type { HistoryPoint } from "@/lib/portfolio/analytics/dashboard";
 import {
+  availableRanges,
   buildMonthlyPerformance,
-  PERFORMANCE_RANGES,
   selectMonthlyRange,
   type MonthlyPerformance,
   type PerformanceRange,
@@ -139,9 +139,11 @@ function MonthTooltip({
 
 export function MonthlyPerformanceCard({ history }: { history: HistoryPoint[] }) {
   const { moneyChange } = useMoneyFormat();
-  const [range, setRange] = useState<PerformanceRange>("YTD");
+  const [selectedRange, setRange] = useState<PerformanceRange>("YTD");
 
   const allMonths = useMemo(() => buildMonthlyPerformance(history), [history]);
+  const ranges = useMemo(() => availableRanges(allMonths), [allMonths]);
+  const range = ranges.includes(selectedRange) ? selectedRange : "ALL";
   const months = useMemo(() => selectMonthlyRange(allMonths, range), [allMonths, range]);
 
   const extent = niceExtent(Math.max(0, ...months.map((entry) => Math.abs(entry.returnPercentage ?? 0))));
@@ -160,7 +162,7 @@ export function MonthlyPerformanceCard({ history }: { history: HistoryPoint[] })
           </CardDescription>
         </div>
         <div className="flex flex-wrap gap-1.5 sm:justify-end" role="group" aria-label="Range">
-          {PERFORMANCE_RANGES.map((option) => (
+          {ranges.map((option) => (
             <button
               key={option}
               type="button"

@@ -85,7 +85,10 @@ export function ContributionsChart({
 }) {
   const { currency, rate } = useCurrency();
   const { moneyChange } = useMoneyFormat();
-  const [range, setRange] = useState<RangeId>("1Y");
+  const [selectedRange, setRange] = useState<RangeId>("1Y");
+
+  const ranges = RANGES.filter((option) => option.months === null || option.months < allMonths.length);
+  const range = ranges.some((option) => option.id === selectedRange) ? selectedRange : "ALL";
 
   const months = useMemo(() => {
     const windowMonths = RANGES.find((option) => option.id === range)!.months;
@@ -117,7 +120,7 @@ export function ContributionsChart({
           </CardDescription>
         </div>
         <div className="flex flex-wrap gap-1.5 sm:justify-end" role="group" aria-label="Range">
-          {RANGES.map((option) => (
+          {ranges.map((option) => (
             <button
               key={option.id}
               type="button"

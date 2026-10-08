@@ -93,27 +93,30 @@ export function buildMonthlyPerformance(history: HistoryPoint[]): MonthlyPerform
   return months;
 }
 
-/**
- * The months a range covers, ending at the latest snapshot's month. Months
- * before the first snapshot are included as empty, so YTD always starts in
- * January.
- */
-export function selectMonthlyRange(months: MonthlyPerformance[], range: PerformanceRange): MonthlyPerformance[] {
-  const latest = months.at(-1)?.month;
-
-  if (!latest) {
-    return [];
-  }
-
-  const start = {
+function rangeStart(latest: string, first: string, range: PerformanceRange): string {
+  return {
     "1M": latest,
     "3M": addMonths(latest, -2),
     "6M": addMonths(latest, -5),
     YTD: `${latest.slice(0, 4)}-01`,
     "1Y": addMonths(latest, -11),
-    ALL: months[0].month,
+    ALL: first,
   }[range];
+}
 
+/**
+ * The months a range covers, ending at the latest snapshot's month and never
+ * starting before the first snapshot's month.
+ */
+export function selectMonthlyRange(months: MonthlyPerformance[], range: PerformanceRange): MonthlyPerformance[] {
+  const first = months[0]?.month;
+  const latest = months.at(-1)?.month;
+
+  if (!first || !latest) {
+    return [];
+  }
+
+  const start = [rangeStart(latest, first, range), first].sort().at(-1)!;
   const byMonth = new Map(months.map((entry) => [entry.month, entry]));
   const selected: MonthlyPerformance[] = [];
 
@@ -122,4 +125,16 @@ export function selectMonthlyRange(months: MonthlyPerformance[], range: Performa
   }
 
   return selected;
+}
+
+/** Ranges that show fewer months than ALL, plus ALL itself. */
+export function availableRanges(months: MonthlyPerformance[]): PerformanceRange[] {
+  const first = months[0]?.month;
+  const latest = months.at(-1)?.month;
+
+  if (!first || !latest) {
+    return ["ALL"];
+  }
+
+  return PERFORMANCE_RANGES.filter((range) => range === "ALL" || rangeStart(latest, first, range) > first);
 }
