@@ -37,6 +37,10 @@ export type Projection = {
   totalContributed: number;
   /** finalValue minus today's value and the new money: what the market adds. */
   projectedGain: number;
+  /** finalValue minus everything invested, including today's profit or loss. */
+  totalProfit: number;
+  /** totalProfit over finalInvested, 0–100 scale. Null when nothing is invested. */
+  absoluteReturn: number | null;
 };
 
 /**
@@ -68,6 +72,7 @@ export function projectInvestment(input: ProjectionInput): Projection {
   }
 
   const totalContributed = invested - input.startInvested;
+  const totalProfit = value - invested;
 
   return {
     points,
@@ -75,5 +80,7 @@ export function projectInvestment(input: ProjectionInput): Projection {
     finalInvested: invested,
     totalContributed,
     projectedGain: value - input.startValue - totalContributed,
+    totalProfit,
+    absoluteReturn: invested > 0 ? (totalProfit / invested) * 100 : null,
   };
 }

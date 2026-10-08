@@ -6,6 +6,7 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 
 import { useCurrency, useMoneyFormat } from "@/components/currency/currency-provider";
 import { PlannerStat } from "@/components/planner/planner-stat";
+import { SignedValue } from "@/components/shared/signed-value";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -128,7 +129,7 @@ export function ProjectionCalculator({
 }: ProjectionCalculatorProps) {
   const id = useId();
   const { currency, rate } = useCurrency();
-  const { money } = useMoneyFormat();
+  const { money, moneyChange } = useMoneyFormat();
 
   const baseReturn = round2(averageReturn ?? FALLBACK_MONTHLY_RETURN);
   const scenarios = [
@@ -342,14 +343,25 @@ export function ProjectionCalculator({
         ) : null}
 
         <section aria-label="Projection result" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <PlannerStat label={`Projected value in ${years} ${years === 1 ? "year" : "years"}`}>
+          <PlannerStat
+            label={`Projected value in ${years} ${years === 1 ? "year" : "years"}`}
+            detail={`Market adds ${moneyChange(projection.projectedGain)} from today`}
+          >
             {money(projection.finalValue)}
           </PlannerStat>
-          <PlannerStat label="New money you put in" detail={`On top of ${money(investedAmount)} invested so far`}>
-            {money(projection.totalContributed)}
+          <PlannerStat
+            label="Total invested"
+            detail={`${money(investedAmount)} so far + ${money(projection.totalContributed)} new`}
+          >
+            {money(projection.finalInvested)}
           </PlannerStat>
-          <PlannerStat label="Projected market gain" detail="Growth on today's value and new money">
-            {money(projection.projectedGain)}
+          <PlannerStat
+            label={`Absolute return in ${years} ${years === 1 ? "year" : "years"}`}
+            detail={
+              <SignedValue value={projection.totalProfit}>{moneyChange(projection.totalProfit)} profit on invested</SignedValue>
+            }
+          >
+            <SignedValue value={projection.totalProfit}>{formatPercentage(projection.absoluteReturn)}</SignedValue>
           </PlannerStat>
           <PlannerStat
             label="Monthly investment at the end"
@@ -422,6 +434,7 @@ export function ProjectionCalculator({
               <TableHead className="text-right">Monthly investment</TableHead>
               <TableHead className="text-right">Total invested</TableHead>
               <TableHead className="text-right">Projected value</TableHead>
+              <TableHead className="text-right">Absolute return</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -433,6 +446,11 @@ export function ProjectionCalculator({
                 <TableCell className="text-right tabular-nums">{money(point.contribution)}</TableCell>
                 <TableCell className="text-right tabular-nums">{money(point.invested)}</TableCell>
                 <TableCell className="text-right font-medium tabular-nums">{money(point.value)}</TableCell>
+                <TableCell className="text-right tabular-nums">
+                  <SignedValue value={point.value - point.invested}>
+                    {point.invested > 0 ? formatPercentage(((point.value - point.invested) / point.invested) * 100) : "—"}
+                  </SignedValue>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
