@@ -98,6 +98,25 @@ npm run db:studio     # browse the data
 The generated Prisma client is written to `src/generated/prisma` and is not
 committed; `npm install` regenerates it via the `postinstall` script.
 
+### Deploying (Hostinger or any host that runs `npm run build`)
+
+`npm run build` runs `prisma generate`, then `prisma migrate deploy`, then
+`next build`, so every deploy brings the database schema up to date first.
+`migrate deploy` only applies migrations that have not run yet and never resets
+or drops data, so it is safe to run on every deploy; with nothing new it prints
+"No pending migrations to apply". If a migration fails, the build fails and the
+previous version keeps running.
+
+Set these in the host's environment variables (available at build time):
+
+- `DATABASE_URL`: the pooled connection the app uses at runtime.
+- `DIRECT_URL`: the unpooled connection used for migrations. Required on Neon,
+  whose pooler cannot run migrations.
+- `FINNHUB_API_KEY`: optional, for live prices, news and analyst ratings.
+
+Note that a local `npm run build` also migrates the database in `.env`; use
+`npm run build:app` to build without it.
+
 Historical portfolio data is immutable by design: a new CSV import always creates
 a new `PortfolioSnapshot` and never updates an existing one or its holdings.
 
@@ -154,7 +173,8 @@ return. All figures come from `buildDashboard()` in
 
 ```bash
 npm run dev           # development server
-npm run build         # production build
+npm run build         # generate client, apply pending migrations, production build
+npm run build:app     # production build only, without touching the database
 npm start             # serve the production build
 npm run lint          # ESLint
 npm run typecheck     # generate route types, then tsc --noEmit
