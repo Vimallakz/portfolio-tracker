@@ -34,8 +34,8 @@ export function SidebarNav({ onNavigate }: SidebarNavProps) {
                   "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                   "focus-visible:ring-sidebar-ring focus-visible:ring-2 focus-visible:outline-none",
                   isActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                    : "text-muted-foreground",
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground light:shadow-[inset_2px_0_0_var(--sidebar-primary)] font-medium"
+                    : "text-muted-foreground light:hover:bg-muted light:hover:text-foreground",
                 )}
               >
                 <item.icon className="size-4 shrink-0" />
