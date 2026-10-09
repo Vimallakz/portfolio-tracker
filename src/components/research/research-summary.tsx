@@ -103,8 +103,11 @@ export function ResearchSummary({ securityId, research }: { securityId: string; 
         </div>
 
         <Section title="Targets">
-          <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <Figure label="Target price" value={price(research.targetPrice)} />
+          <dl className={research.analystTargetManual ? "grid grid-cols-1 gap-3 sm:grid-cols-2" : "grid grid-cols-1 gap-3 sm:grid-cols-3"}>
+            <Figure label="My target" value={price(research.targetPrice)} />
+            {research.analystTargetManual ? (
+              <Figure label="Analyst target" value={price(research.analystTargetManual)} />
+            ) : null}
             <Figure label="Accumulation zone" value={zone} />
             <Figure label="Stop / exit" value={price(research.stopPrice)} />
           </dl>

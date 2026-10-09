@@ -1,8 +1,10 @@
 import { Upload } from "lucide-react";
+import { Suspense } from "react";
 
 import { AllocationCard } from "@/components/dashboard/allocation-card";
 import { LargestHoldingsCard } from "@/components/dashboard/largest-holdings-card";
 import { MonthlyPerformanceCard } from "@/components/dashboard/monthly-performance-card";
+import { NeedsAttentionCard, NeedsAttentionSkeleton } from "@/components/dashboard/needs-attention-card";
 import { PerformersCard } from "@/components/dashboard/performers-card";
 import { PlannerTeaserCard } from "@/components/dashboard/planner-teaser-card";
 import { PortfolioSummary } from "@/components/dashboard/portfolio-summary";
@@ -86,6 +88,9 @@ export default async function DashboardPage({
               <MonthlyPerformanceCard history={dashboard.history} />
             </div>
             <div className="grid content-start gap-4">
+              <Suspense fallback={<NeedsAttentionSkeleton />}>
+                <NeedsAttentionCard profileId={activeProfile.id} />
+              </Suspense>
               <AllocationCard allocation={dashboard.allocation} />
               <SincePreviousCard change={dashboard.sincePrevious} />
               {planner ? <PlannerTeaserCard planner={planner} /> : null}

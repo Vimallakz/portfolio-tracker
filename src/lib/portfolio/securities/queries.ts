@@ -209,6 +209,7 @@ export async function getSecurityDetail(profileId: string, securityId: string): 
       ? {
           ...research,
           targetPrice: decimalOrNull(research.targetPrice),
+          analystTargetManual: decimalOrNull(research.analystTargetManual),
           accumulationMin: decimalOrNull(research.accumulationMin),
           accumulationMax: decimalOrNull(research.accumulationMax),
           stopPrice: decimalOrNull(research.stopPrice),
