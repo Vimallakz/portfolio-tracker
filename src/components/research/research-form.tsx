@@ -18,7 +18,7 @@ import { CONVICTION_LABEL, CONVICTIONS, INVESTMENT_STATUS_LABEL, INVESTMENT_STAT
 import { researchFormSchema, type ResearchFormValues } from "@/lib/research/schema";
 
 type TextKey = "thesis" | "whyBought" | "businessDescription" | "bullCase" | "baseCase" | "bearCase" | "risks" | "personalNotes";
-type PriceKey = "targetPrice" | "accumulationMin" | "accumulationMax" | "stopPrice";
+type PriceKey = "targetPrice" | "analystTargetManual" | "accumulationMin" | "accumulationMax" | "stopPrice";
 
 type ResearchFormProps = {
   securityId: string;
@@ -57,8 +57,8 @@ export function ResearchForm({ securityId, defaultValues }: ResearchFormProps) {
     </FormField>
   );
 
-  const priceField = (key: PriceKey, label: string) => (
-    <FormField id={`${formId}-${key}`} label={label} error={errors[key]?.message}>
+  const priceField = (key: PriceKey, label: string, description?: string) => (
+    <FormField id={`${formId}-${key}`} label={label} description={description} error={errors[key]?.message}>
       <Input inputMode="decimal" placeholder="0.00" autoComplete="off" {...register(key)} />
     </FormField>
   );
@@ -91,11 +91,20 @@ export function ResearchForm({ securityId, defaultValues }: ResearchFormProps) {
       <Card>
         <CardHeader>
           <CardTitle>Plan</CardTitle>
-          <CardDescription>Your own levels. The app never recommends buying or selling.</CardDescription>
+          <CardDescription>
+            Your levels in USD. Signals compare them with the price; they are prompts to review, not advice.
+          </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {priceField("targetPrice", "Target price")}
+          <div className="grid gap-4 sm:grid-cols-2">
+            {priceField("targetPrice", "My target price", "Your own prediction.")}
+            {priceField(
+              "analystTargetManual",
+              "Analyst target",
+              "The consensus target, from Tickertape's Analyst Ratings & Forecast. Kept separate from yours.",
+            )}
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
             {priceField("accumulationMin", "Accumulate from")}
             {priceField("accumulationMax", "Accumulate up to")}
             {priceField("stopPrice", "Stop / exit price")}

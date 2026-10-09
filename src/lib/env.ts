@@ -7,6 +7,8 @@ import { z } from "zod";
 const serverEnvSchema = z.object({
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
   DIRECT_URL: z.string().min(1).optional(),
+  /** Live quotes, company news and analyst ratings. Without it, snapshot prices are used and the rest is hidden. */
+  FINNHUB_API_KEY: z.string().min(1).optional(),
   NODE_ENV: z
     .enum(["development", "test", "production"])
     .default("development"),
