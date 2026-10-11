@@ -14,7 +14,7 @@ import {
 } from "recharts";
 
 import { useCurrency, useMoneyFormat } from "@/components/currency/currency-provider";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardShell } from "@/components/shared/card-shell";
 import { convertFromUsd } from "@/lib/currency/currency";
 import { formatSnapshotDate } from "@/lib/format/date";
 import { formatCompactMoney } from "@/lib/format/number";
@@ -84,9 +84,12 @@ function ContributionTooltip({
 export function ContributionsChart({
   months: allMonths,
   sixMonthAverage,
+  embedded = false,
 }: {
   months: MonthlyContribution[];
   sixMonthAverage: number | null;
+  /** Rendered inside another card, such as a planner tab. */
+  embedded?: boolean;
 }) {
   const { currency, rate } = useCurrency();
   const { moneyChange } = useMoneyFormat();
@@ -116,14 +119,11 @@ export function ContributionsChart({
   const hasEstimates = months.some((entry) => entry.isEstimated);
 
   return (
-    <Card>
-      <CardHeader className="gap-3 sm:grid-cols-[1fr_auto]">
-        <div className="grid gap-1">
-          <CardTitle>Money invested each month</CardTitle>
-          <CardDescription>
-            Net change in invested amount between month-end snapshots. Sales lower it, so a month can be negative.
-          </CardDescription>
-        </div>
+    <CardShell
+      title="Money invested each month"
+      description="Net change in invested amount between month-end snapshots. Sales lower it, so a month can be negative."
+      embedded={embedded}
+      actions={
         <div className="flex flex-wrap gap-1.5 sm:justify-end" role="group" aria-label="Range">
           {ranges.map((option) => (
             <button
@@ -142,83 +142,82 @@ export function ContributionsChart({
             </button>
           ))}
         </div>
-      </CardHeader>
-      <CardContent className="grid gap-3">
-        <div className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 text-xs">
+      }
+    >
+      <div className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 text-xs">
+        <span className="flex items-center gap-1.5">
+          <span aria-hidden="true" className="size-2.5 rounded-sm" style={{ backgroundColor: "var(--chart-2)" }} />
+          Measured
+        </span>
+        {hasEstimates ? (
           <span className="flex items-center gap-1.5">
-            <span aria-hidden="true" className="size-2.5 rounded-sm" style={{ backgroundColor: "var(--chart-2)" }} />
-            Measured
+            <svg aria-hidden="true" className="size-2.5 rounded-sm" viewBox="0 0 10 10">
+              <rect width="10" height="10" fill="var(--chart-2)" fillOpacity={0.25} />
+              <path d="M-2,2 l4,-4 M0,10 l10,-10 M8,12 l4,-4" stroke="var(--chart-2)" strokeWidth={2} />
+            </svg>
+            Estimated (no snapshot that month)
           </span>
-          {hasEstimates ? (
-            <span className="flex items-center gap-1.5">
-              <svg aria-hidden="true" className="size-2.5 rounded-sm" viewBox="0 0 10 10">
-                <rect width="10" height="10" fill="var(--chart-2)" fillOpacity={0.25} />
-                <path d="M-2,2 l4,-4 M0,10 l10,-10 M8,12 l4,-4" stroke="var(--chart-2)" strokeWidth={2} />
-              </svg>
-              Estimated (no snapshot that month)
-            </span>
-          ) : null}
-          {sixMonthAverage !== null ? (
-            <span className="flex items-center gap-1.5">
-              <span aria-hidden="true" className="w-3 border-t-2 border-dashed" style={{ borderColor: "var(--chart-1)" }} />
-              6-month average
-            </span>
-          ) : null}
-        </div>
-
-        <div className="h-64 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-              <defs>
-                <pattern id={HATCH_ID} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                  <rect width="6" height="6" fill="var(--chart-2)" fillOpacity={0.25} />
-                  <line x1="0" y1="0" x2="0" y2="6" stroke="var(--chart-2)" strokeWidth={3} />
-                </pattern>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-              <XAxis
-                dataKey="month"
-                tickFormatter={(month: string) => `${monthShort.format(toDate(month))} ’${month.slice(2, 4)}`}
-                tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                tickLine={false}
-                axisLine={false}
-                minTickGap={8}
-              />
-              <YAxis
-                tickFormatter={(value: number) => formatCompactMoney(value, currency)}
-                tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                tickLine={false}
-                axisLine={false}
-                width={56}
-              />
-              <ReferenceLine y={0} stroke="var(--muted-foreground)" strokeOpacity={0.5} />
-              {sixMonthAverage !== null ? (
-                <ReferenceLine
-                  y={convertFromUsd(sixMonthAverage, currency, rate)}
-                  stroke="var(--chart-1)"
-                  strokeDasharray="4 4"
-                  strokeWidth={1.5}
-                />
-              ) : null}
-              <Tooltip
-                cursor={{ fill: "var(--accent)", opacity: 0.5 }}
-                content={<ContributionTooltip moneyChange={moneyChange} />}
-              />
-              <Bar dataKey="displayAmount" radius={4} maxBarSize={48} isAnimationActive={false}>
-                {data.map((entry) => (
-                  <Cell key={entry.month} fill={barFill(entry)} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {months.length <= 1 ? (
-          <p className="text-muted-foreground text-xs">
-            Upload a snapshot next month to see how much you invest each month.
-          </p>
         ) : null}
-      </CardContent>
-    </Card>
+        {sixMonthAverage !== null ? (
+          <span className="flex items-center gap-1.5">
+            <span aria-hidden="true" className="w-3 border-t-2 border-dashed" style={{ borderColor: "var(--chart-1)" }} />
+            6-month average
+          </span>
+        ) : null}
+      </div>
+
+      <div className="h-64 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+            <defs>
+              <pattern id={HATCH_ID} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                <rect width="6" height="6" fill="var(--chart-2)" fillOpacity={0.25} />
+                <line x1="0" y1="0" x2="0" y2="6" stroke="var(--chart-2)" strokeWidth={3} />
+              </pattern>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+            <XAxis
+              dataKey="month"
+              tickFormatter={(month: string) => `${monthShort.format(toDate(month))} ’${month.slice(2, 4)}`}
+              tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+              tickLine={false}
+              axisLine={false}
+              minTickGap={8}
+            />
+            <YAxis
+              tickFormatter={(value: number) => formatCompactMoney(value, currency)}
+              tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+              tickLine={false}
+              axisLine={false}
+              width={56}
+            />
+            <ReferenceLine y={0} stroke="var(--muted-foreground)" strokeOpacity={0.5} />
+            {sixMonthAverage !== null ? (
+              <ReferenceLine
+                y={convertFromUsd(sixMonthAverage, currency, rate)}
+                stroke="var(--chart-1)"
+                strokeDasharray="4 4"
+                strokeWidth={1.5}
+              />
+            ) : null}
+            <Tooltip
+              cursor={{ fill: "var(--accent)", opacity: 0.5 }}
+              content={<ContributionTooltip moneyChange={moneyChange} />}
+            />
+            <Bar dataKey="displayAmount" radius={4} maxBarSize={48} isAnimationActive={false}>
+              {data.map((entry) => (
+                <Cell key={entry.month} fill={barFill(entry)} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {months.length <= 1 ? (
+        <p className="text-muted-foreground text-xs">
+          Upload a snapshot next month to see how much you invest each month.
+        </p>
+      ) : null}
+    </CardShell>
   );
 }

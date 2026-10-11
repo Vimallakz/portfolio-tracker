@@ -5,9 +5,10 @@ import { useMemo, useState } from "react";
 
 import { Money } from "@/components/currency/money";
 import { SecurityLabel } from "@/components/dashboard/security-label";
-import { HoldingStatusBadge } from "@/components/shared/holding-status-badge";
+import { type StatusFilter, useChangeFilter } from "@/components/history/change-filter";
+import { CardShell } from "@/components/shared/card-shell";
+import { HOLDING_STATUS_LABEL, HoldingStatusBadge } from "@/components/shared/holding-status-badge";
 import { SignedValue } from "@/components/shared/signed-value";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -41,6 +42,7 @@ const COLUMNS: { key: HoldingSortKey; label: string; numeric?: boolean }[] = [
 ];
 
 const STATUS_ORDER: Record<HoldingChangeStatus, number> = { NEW: 0, INCREASED: 1, REDUCED: 2, UNCHANGED: 3, REMOVED: 4 };
+const FILTER_STATUSES: HoldingChangeStatus[] = ["NEW", "INCREASED", "REDUCED", "REMOVED", "UNCHANGED"];
 
 /** A removed holding has no current figures, so its last known ones are shown; number sorts keep it last. */
 const metric = (h: ComparedHolding, key: MetricKey) => Number((h.next ?? h.previous)?.[key] ?? 0);
@@ -71,6 +73,8 @@ type HoldingChangesTableProps = {
   description: string;
   holdings: ComparedHolding[];
   defaultSort?: HoldingSort;
+  /** Adds a row of change filters (New, Increased, …) with their counts. */
+  filterable?: boolean;
 };
 
 export function HoldingChangesTable({
@@ -78,9 +82,25 @@ export function HoldingChangesTable({
   description,
   holdings,
   defaultSort = { key: "status", direction: "asc" },
+  filterable = false,
 }: HoldingChangesTableProps) {
   const [sort, setSort] = useState<HoldingSort>(defaultSort);
-  const sorted = useMemo(() => sortHoldings(holdings, sort), [holdings, sort]);
+  const [ownFilter, setOwnFilter] = useState<StatusFilter>("ALL");
+  const shared = useChangeFilter();
+  const filter = shared?.filter ?? ownFilter;
+  const setFilter = shared?.setFilter ?? setOwnFilter;
+  const sorted = useMemo(
+    () => sortHoldings(filter === "ALL" ? holdings : holdings.filter((h) => h.status === filter), sort),
+    [holdings, filter, sort],
+  );
+
+  const filters = useMemo(() => {
+    const count = (status: HoldingChangeStatus) => holdings.filter((h) => h.status === status).length;
+    return [
+      { id: "ALL" as const, label: "All", count: holdings.length },
+      ...FILTER_STATUSES.map((status) => ({ id: status, label: HOLDING_STATUS_LABEL[status], count: count(status) })),
+    ].filter((option) => option.id === "ALL" || option.count > 0);
+  }, [holdings]);
 
   function toggleSort(key: HoldingSortKey, numeric: boolean) {
     setSort((current) =>
@@ -91,11 +111,40 @@ export function HoldingChangesTable({
   }
 
   return (
-    <Card className="pb-0">
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
+    <CardShell
+      title={title}
+      description={description}
+      flush
+      actions={
+        filterable ? (
+          <div
+            role="group"
+            aria-label="Filter by change"
+            className="bg-muted flex w-fit max-w-full gap-0.5 overflow-x-auto rounded-lg p-0.5"
+          >
+            {filters.map((option) => {
+              const pressed = filter === option.id;
+
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  aria-pressed={pressed}
+                  onClick={() => setFilter(option.id)}
+                  className={cn(
+                    "focus-visible:ring-ring/50 inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 text-xs font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-3",
+                    pressed ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {option.label}
+                  <span className="text-muted-foreground tabular-nums">{option.count}</span>
+                </button>
+              );
+            })}
+          </div>
+        ) : undefined
+      }
+    >
       <Table>
         <TableHeader>
           <TableRow>
@@ -184,6 +233,6 @@ export function HoldingChangesTable({
           })}
         </TableBody>
       </Table>
-    </Card>
+    </CardShell>
   );
 }

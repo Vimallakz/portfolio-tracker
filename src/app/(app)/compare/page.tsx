@@ -1,5 +1,6 @@
 import { GitCompareArrows } from "lucide-react";
 
+import { CHANGE_TABLE_ID, ChangeFilterProvider } from "@/components/history/change-filter";
 import { ComparePicker } from "@/components/history/compare-picker";
 import { ComparisonSummaryCard } from "@/components/history/comparison-summary-card";
 import { HoldingChangesTable } from "@/components/history/holding-changes-table";
@@ -67,20 +68,25 @@ export default async function ComparePage({
       <PageHeader title="Compare snapshots" description={DESCRIPTION} />
       <ComparePicker snapshots={options} fromId={from.id} toId={to.id} />
 
-      <div className="grid gap-4">
-        <ComparisonSummaryCard
-          fromDate={from.snapshotDate}
-          toDate={to.snapshotDate}
-          before={diff.before!}
-          after={diff.after}
-          summary={diff.summary}
-        />
-        <HoldingChangesTable
-          title="Security changes"
-          description={`Figures are from ${formatSnapshotDate(to.snapshotDate)}; small numbers below show the change since ${formatSnapshotDate(from.snapshotDate)}. Removed holdings show their last known figures.`}
-          holdings={diff.holdings}
-        />
-      </div>
+      <ChangeFilterProvider key={`${from.id}-${to.id}`}>
+        <div className="grid gap-4">
+          <ComparisonSummaryCard
+            fromDate={from.snapshotDate}
+            toDate={to.snapshotDate}
+            before={diff.before!}
+            after={diff.after}
+            summary={diff.summary}
+          />
+          <div id={CHANGE_TABLE_ID} className="scroll-mt-20">
+            <HoldingChangesTable
+              title="Security changes"
+              description={`Figures are from ${formatSnapshotDate(to.snapshotDate)}; small numbers below show the change since ${formatSnapshotDate(from.snapshotDate)}. Removed holdings show their last known figures.`}
+              holdings={diff.holdings}
+              filterable
+            />
+          </div>
+        </div>
+      </ChangeFilterProvider>
     </>
   );
 }

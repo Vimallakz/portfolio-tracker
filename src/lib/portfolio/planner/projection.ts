@@ -1,4 +1,14 @@
 export const STEP_UP_INTERVALS = [3, 6, 12] as const;
+
+/** Years a new plan projects until changed. */
+export const DEFAULT_PLAN_YEARS = 5;
+/** Monthly return used when the portfolio has no measured history yet: about 10% a year. */
+export const FALLBACK_MONTHLY_RETURN = 0.8;
+
+/** The plan's starting return: the measured average, or the fallback, to two decimals. */
+export function planReturn(averageReturn: number | null): number {
+  return Math.round((averageReturn ?? FALLBACK_MONTHLY_RETURN) * 100) / 100;
+}
 export type StepUpInterval = (typeof STEP_UP_INTERVALS)[number];
 
 export type StepUp = {

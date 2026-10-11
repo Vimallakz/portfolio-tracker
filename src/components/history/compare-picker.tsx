@@ -1,3 +1,5 @@
+import { ArrowRight } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -20,15 +22,23 @@ export function ComparePicker({ snapshots, fromId, toId }: ComparePickerProps) {
   ));
 
   return (
-    <form action="/compare" className="flex flex-wrap items-end gap-3 pb-6">
+    <form
+      action="/compare"
+      className="bg-card light:shadow-surface mb-6 flex flex-wrap items-end gap-3 rounded-xl p-3 ring-1 ring-foreground/10 light:ring-foreground/[0.08]"
+    >
       <div className="grid w-full gap-1.5 sm:w-60">
-        <Label htmlFor="compare-from">From</Label>
+        <Label htmlFor="compare-from" className="text-muted-foreground text-xs">
+          From
+        </Label>
         <NativeSelect id="compare-from" name="from" defaultValue={fromId} key={`from-${fromId}`}>
           {options}
         </NativeSelect>
       </div>
+      <ArrowRight aria-hidden="true" className="text-muted-foreground mb-2.5 hidden size-4 sm:block" />
       <div className="grid w-full gap-1.5 sm:w-60">
-        <Label htmlFor="compare-to">To</Label>
+        <Label htmlFor="compare-to" className="text-muted-foreground text-xs">
+          To
+        </Label>
         <NativeSelect id="compare-to" name="to" defaultValue={toId} key={`to-${toId}`}>
           {options}
         </NativeSelect>

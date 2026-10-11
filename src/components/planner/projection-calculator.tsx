@@ -5,8 +5,8 @@ import { useId, useMemo, useState } from "react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { useCurrency, useMoneyFormat } from "@/components/currency/currency-provider";
-import { PlannerStat } from "@/components/planner/planner-stat";
 import { SignedValue } from "@/components/shared/signed-value";
+import { Stat, StatStrip } from "@/components/shared/stat-strip";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +18,8 @@ import { convertFromUsd, convertToUsd } from "@/lib/currency/currency";
 import { formatCompactMoney, formatMoney, formatPercentage } from "@/lib/format/number";
 import { annualizeMonthlyReturn } from "@/lib/portfolio/planner/earnings";
 import {
+  DEFAULT_PLAN_YEARS,
+  planReturn,
   projectInvestment,
   STEP_UP_INTERVALS,
   type ProjectionPoint,
@@ -29,8 +31,6 @@ import { cn } from "@/lib/utils";
 const YEAR_PRESETS = [1, 3, 5, 10, 20] as const;
 const MAX_YEARS = 50;
 
-/** Monthly return used when the portfolio has no measured history yet: about 10% a year. */
-const FALLBACK_MONTHLY_RETURN = 0.8;
 /** Gap between the scenarios and the base rate, per month (about 3% a year). */
 const SCENARIO_SPREAD = 0.25;
 /** Above this yearly rate the projection is flagged as unlikely to last. */
@@ -131,7 +131,7 @@ export function ProjectionCalculator({
   const { currency, rate } = useCurrency();
   const { money, moneyChange } = useMoneyFormat();
 
-  const baseReturn = round2(averageReturn ?? FALLBACK_MONTHLY_RETURN);
+  const baseReturn = planReturn(averageReturn);
   const scenarios = [
     { id: "conservative", label: "Conservative", value: round2(baseReturn - SCENARIO_SPREAD) },
     { id: "average", label: averageReturn === null ? "Market average" : "Your average", value: baseReturn },
@@ -140,7 +140,7 @@ export function ProjectionCalculator({
 
   const [contribution, setContribution] = useState(Math.max(0, defaultContribution));
   const [returnDraft, setReturnDraft] = useState(String(baseReturn));
-  const [yearsDraft, setYearsDraft] = useState("5");
+  const [yearsDraft, setYearsDraft] = useState(String(DEFAULT_PLAN_YEARS));
   const [stepUpEnabled, setStepUpEnabled] = useState(false);
   const [stepUpEvery, setStepUpEvery] = useState<StepUpInterval>(12);
   const [stepUpKind, setStepUpKind] = useState<StepUp["kind"]>("percent");
@@ -201,230 +201,246 @@ export function ProjectionCalculator({
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-6">
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="grid content-start gap-2">
-            <Label htmlFor={`${id}-contribution`}>Monthly investment</Label>
-            <MoneyInput
-              key={resetCount}
-              id={`${id}-contribution`}
-              usdValue={contribution}
-              onChange={setContribution}
-            />
-            <p className="text-muted-foreground text-xs">Starts at {contributionSource}.</p>
-          </div>
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+          <form className="grid content-start gap-5" aria-label="Plan inputs" onSubmit={(event) => event.preventDefault()}>
+            <div className="grid content-start gap-2">
+              <Label htmlFor={`${id}-contribution`}>Monthly investment</Label>
+              <MoneyInput
+                key={resetCount}
+                id={`${id}-contribution`}
+                usdValue={contribution}
+                onChange={setContribution}
+              />
+              <p className="text-muted-foreground text-xs">Starts at {contributionSource}.</p>
+            </div>
 
-          <div className="grid content-start gap-2">
-            <Label htmlFor={`${id}-return`}>Expected return per month</Label>
-            <div className="relative">
+            <div className="grid content-start gap-2">
+              <Label htmlFor={`${id}-return`}>Expected return per month</Label>
+              <div className="relative">
+                <Input
+                  id={`${id}-return`}
+                  type="number"
+                  inputMode="decimal"
+                  step="0.05"
+                  className="pr-7 tabular-nums"
+                  value={returnDraft}
+                  onChange={(event) => setReturnDraft(event.target.value)}
+                />
+                <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 text-sm">
+                  %
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1.5" role="group" aria-label="Return scenario">
+                {scenarios.map((scenario) => (
+                  <PillButton
+                    key={scenario.id}
+                    pressed={monthlyReturn === scenario.value}
+                    onClick={() => setReturnDraft(String(scenario.value))}
+                  >
+                    {scenario.label} {scenario.value}%
+                  </PillButton>
+                ))}
+              </div>
+              <p className="text-muted-foreground text-xs">
+                About {formatPercentage(annualReturn, 1)} a year. &quot;{scenarios[1].label}&quot; is {returnSource}.
+              </p>
+            </div>
+
+            <div className="grid content-start gap-2">
+              <Label htmlFor={`${id}-years`}>Years</Label>
               <Input
-                id={`${id}-return`}
+                id={`${id}-years`}
                 type="number"
-                inputMode="decimal"
-                step="0.05"
-                className="pr-7 tabular-nums"
-                value={returnDraft}
-                onChange={(event) => setReturnDraft(event.target.value)}
+                inputMode="numeric"
+                min={1}
+                max={MAX_YEARS}
+                step={1}
+                className="tabular-nums"
+                value={yearsDraft}
+                onChange={(event) => setYearsDraft(event.target.value)}
               />
-              <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 text-sm">
-                %
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Return scenario">
-              {scenarios.map((scenario) => (
-                <PillButton
-                  key={scenario.id}
-                  pressed={monthlyReturn === scenario.value}
-                  onClick={() => setReturnDraft(String(scenario.value))}
-                >
-                  {scenario.label} {scenario.value}%
-                </PillButton>
-              ))}
-            </div>
-            <p className="text-muted-foreground text-xs">
-              About {formatPercentage(annualReturn, 1)} a year. &quot;{scenarios[1].label}&quot; is {returnSource}.
-            </p>
-          </div>
-
-          <div className="grid content-start gap-2">
-            <Label htmlFor={`${id}-years`}>Years</Label>
-            <Input
-              id={`${id}-years`}
-              type="number"
-              inputMode="numeric"
-              min={1}
-              max={MAX_YEARS}
-              step={1}
-              className="tabular-nums"
-              value={yearsDraft}
-              onChange={(event) => setYearsDraft(event.target.value)}
-            />
-            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Years">
-              {YEAR_PRESETS.map((preset) => (
-                <PillButton key={preset} pressed={years === preset} onClick={() => setYearsDraft(String(preset))}>
-                  {preset}Y
-                </PillButton>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="grid gap-3 rounded-lg border p-3">
-          <label className="flex items-center gap-2 text-sm font-medium">
-            <input
-              type="checkbox"
-              className="accent-primary size-4"
-              checked={stepUpEnabled}
-              onChange={(event) => setStepUpEnabled(event.target.checked)}
-            />
-            Step up my monthly investment
-          </label>
-          {stepUpEnabled ? (
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="grid gap-2">
-                <Label htmlFor={`${id}-step-every`}>Every</Label>
-                <NativeSelect
-                  id={`${id}-step-every`}
-                  value={stepUpEvery}
-                  onChange={(event) => setStepUpEvery(Number(event.target.value) as StepUpInterval)}
-                >
-                  {STEP_UP_INTERVALS.map((interval) => (
-                    <option key={interval} value={interval}>
-                      {interval} months
-                    </option>
-                  ))}
-                </NativeSelect>
+              <div className="flex flex-wrap gap-1.5" role="group" aria-label="Years">
+                {YEAR_PRESETS.map((preset) => (
+                  <PillButton key={preset} pressed={years === preset} onClick={() => setYearsDraft(String(preset))}>
+                    {preset}Y
+                  </PillButton>
+                ))}
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor={`${id}-step-kind`}>Increase by</Label>
-                <NativeSelect
-                  id={`${id}-step-kind`}
-                  value={stepUpKind}
-                  onChange={(event) => setStepUpKind(event.target.value as StepUp["kind"])}
-                >
-                  <option value="percent">Percentage</option>
-                  <option value="amount">Fixed amount</option>
-                </NativeSelect>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor={`${id}-step-value`}>{stepUpKind === "percent" ? "Percentage" : "Amount"}</Label>
-                {stepUpKind === "percent" ? (
-                  <div className="relative">
-                    <Input
-                      id={`${id}-step-value`}
-                      type="number"
-                      inputMode="decimal"
-                      min={0}
-                      step="any"
-                      className="pr-7 tabular-nums"
-                      value={stepUpPercent}
-                      onChange={(event) => setStepUpPercent(event.target.value)}
-                    />
-                    <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 text-sm">
-                      %
-                    </span>
+            </div>
+
+            <div className="grid gap-3 rounded-lg border p-3">
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <input
+                  type="checkbox"
+                  className="accent-primary size-4"
+                  checked={stepUpEnabled}
+                  onChange={(event) => setStepUpEnabled(event.target.checked)}
+                />
+                Step up my monthly investment
+              </label>
+              {stepUpEnabled ? (
+                <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                  <div className="grid gap-2">
+                    <Label htmlFor={`${id}-step-every`}>Every</Label>
+                    <NativeSelect
+                      id={`${id}-step-every`}
+                      value={stepUpEvery}
+                      onChange={(event) => setStepUpEvery(Number(event.target.value) as StepUpInterval)}
+                    >
+                      {STEP_UP_INTERVALS.map((interval) => (
+                        <option key={interval} value={interval}>
+                          {interval} months
+                        </option>
+                      ))}
+                    </NativeSelect>
                   </div>
-                ) : (
-                  <MoneyInput id={`${id}-step-value`} usdValue={stepUpAmount} onChange={setStepUpAmount} />
-                )}
-              </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor={`${id}-step-kind`}>Increase by</Label>
+                    <NativeSelect
+                      id={`${id}-step-kind`}
+                      value={stepUpKind}
+                      onChange={(event) => setStepUpKind(event.target.value as StepUp["kind"])}
+                    >
+                      <option value="percent">Percentage</option>
+                      <option value="amount">Fixed amount</option>
+                    </NativeSelect>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor={`${id}-step-value`}>{stepUpKind === "percent" ? "Percentage" : "Amount"}</Label>
+                    {stepUpKind === "percent" ? (
+                      <div className="relative">
+                        <Input
+                          id={`${id}-step-value`}
+                          type="number"
+                          inputMode="decimal"
+                          min={0}
+                          step="any"
+                          className="pr-7 tabular-nums"
+                          value={stepUpPercent}
+                          onChange={(event) => setStepUpPercent(event.target.value)}
+                        />
+                        <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 text-sm">
+                          %
+                        </span>
+                      </div>
+                    ) : (
+                      <MoneyInput id={`${id}-step-value`} usdValue={stepUpAmount} onChange={setStepUpAmount} />
+                    )}
+                  </div>
+                </div>
+              ) : null}
             </div>
-          ) : null}
-        </div>
 
-        {annualReturn > HIGH_ANNUAL_RETURN ? (
-          <Alert>
-            <TriangleAlert />
-            <AlertTitle>This return is unusually high</AlertTitle>
-            <AlertDescription>
-              {formatPercentage(annualReturn, 1)} a year is well above the long-run stock market average of about
-              10%. Short histories often look better than what lasts, so check the Conservative scenario too.
-            </AlertDescription>
-          </Alert>
-        ) : null}
-
-        <section aria-label="Projection result" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <PlannerStat
-            label={`Projected value in ${years} ${years === 1 ? "year" : "years"}`}
-            detail={`Market adds ${moneyChange(projection.projectedGain)} from today`}
-          >
-            {money(projection.finalValue)}
-          </PlannerStat>
-          <PlannerStat
-            label="Total invested"
-            detail={`${money(investedAmount)} so far + ${money(projection.totalContributed)} new`}
-          >
-            {money(projection.finalInvested)}
-          </PlannerStat>
-          <PlannerStat
-            label={`Absolute return in ${years} ${years === 1 ? "year" : "years"}`}
-            detail={
-              <SignedValue value={projection.totalProfit}>{moneyChange(projection.totalProfit)} profit on invested</SignedValue>
-            }
-          >
-            <SignedValue value={projection.totalProfit}>{formatPercentage(projection.absoluteReturn)}</SignedValue>
-          </PlannerStat>
-          <PlannerStat
-            label="Monthly investment at the end"
-            detail={stepUp ? `Up from ${money(contribution)}` : "No step-up"}
-          >
-            {money(finalContribution)}
-          </PlannerStat>
-        </section>
-
-        <div className="h-72 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-              <XAxis
-                dataKey="month"
-                type="number"
-                domain={[0, totalMonths]}
-                ticks={ticks}
-                tickFormatter={(month: number) => horizonLabel(month, totalMonths)}
-                tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis
-                tickFormatter={(value: number) => formatCompactMoney(value, currency)}
-                tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                tickLine={false}
-                axisLine={false}
-                width={60}
-              />
-              <Tooltip
-                labelFormatter={(month) => (Number(month) === 0 ? "Now" : `Month ${month}`)}
-                formatter={(value, name) => [formatMoney(Number(value), currency), name]}
-                contentStyle={{
-                  background: "var(--popover)",
-                  border: "1px solid var(--border)",
-                  borderRadius: 6,
-                  fontSize: 12,
+            <div className="flex justify-start">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setContribution(Math.max(0, defaultContribution));
+                  setReturnDraft(String(baseReturn));
+                  setYearsDraft(String(DEFAULT_PLAN_YEARS));
+                  setStepUpEnabled(false);
+                  setResetCount((count) => count + 1);
                 }}
-              />
-              <Area
-                dataKey="value"
-                name="Projected value"
-                type="monotone"
-                stroke="var(--chart-1)"
-                fill="var(--chart-1)"
-                fillOpacity={0.15}
-                strokeWidth={2}
-                isAnimationActive={false}
-              />
-              <Area
-                dataKey="invested"
-                name="Total invested"
-                type="monotone"
-                stroke="var(--chart-2)"
-                fill="var(--chart-2)"
-                fillOpacity={0.1}
-                strokeDasharray="4 4"
-                strokeWidth={2}
-                isAnimationActive={false}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+              >
+                Reset to my numbers
+              </Button>
+            </div>
+          </form>
+
+          <section aria-label="Projection result" className="grid content-start gap-4">
+            <StatStrip className="lg:grid-cols-2">
+              <Stat
+                label={`Value in ${years} ${years === 1 ? "year" : "years"}`}
+                detail={`Market adds ${moneyChange(projection.projectedGain)} from today`}
+              >
+                {money(projection.finalValue)}
+              </Stat>
+              <Stat
+                label="Total invested"
+                detail={`${money(investedAmount)} so far + ${money(projection.totalContributed)} new`}
+              >
+                {money(projection.finalInvested)}
+              </Stat>
+              <Stat
+                label="Absolute return"
+                detail={
+                  <SignedValue value={projection.totalProfit}>{moneyChange(projection.totalProfit)} profit on invested</SignedValue>
+                }
+              >
+                <SignedValue value={projection.totalProfit}>{formatPercentage(projection.absoluteReturn)}</SignedValue>
+              </Stat>
+              <Stat label="Monthly investment at the end" detail={stepUp ? `Up from ${money(contribution)}` : "No step-up"}>
+                {money(finalContribution)}
+              </Stat>
+            </StatStrip>
+            {annualReturn > HIGH_ANNUAL_RETURN ? (
+              <Alert>
+                <TriangleAlert />
+                <AlertTitle>This return is unusually high</AlertTitle>
+                <AlertDescription>
+                  {formatPercentage(annualReturn, 1)} a year is well above the long-run stock market average of about
+                  10%. Short histories often look better than what lasts, so check the Conservative scenario too.
+                </AlertDescription>
+              </Alert>
+            ) : null}
+            <div className="h-72 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                  <XAxis
+                    dataKey="month"
+                    type="number"
+                    domain={[0, totalMonths]}
+                    ticks={ticks}
+                    tickFormatter={(month: number) => horizonLabel(month, totalMonths)}
+                    tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis
+                    tickFormatter={(value: number) => formatCompactMoney(value, currency)}
+                    tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                    tickLine={false}
+                    axisLine={false}
+                    width={60}
+                  />
+                  <Tooltip
+                    labelFormatter={(month) => (Number(month) === 0 ? "Now" : `Month ${month}`)}
+                    formatter={(value, name) => [formatMoney(Number(value), currency), name]}
+                    contentStyle={{
+                      background: "var(--popover)",
+                      border: "1px solid var(--border)",
+                      borderRadius: 6,
+                      fontSize: 12,
+                    }}
+                  />
+                  <Area
+                    dataKey="value"
+                    name="Projected value"
+                    type="monotone"
+                    stroke="var(--chart-1)"
+                    fill="var(--chart-1)"
+                    fillOpacity={0.15}
+                    strokeWidth={2}
+                    isAnimationActive={false}
+                  />
+                  <Area
+                    dataKey="invested"
+                    name="Total invested"
+                    type="monotone"
+                    stroke="var(--chart-2)"
+                    fill="var(--chart-2)"
+                    fillOpacity={0.1}
+                    strokeDasharray="4 4"
+                    strokeWidth={2}
+                    isAnimationActive={false}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </section>
         </div>
 
         <Table>
@@ -460,23 +476,6 @@ export function ProjectionCalculator({
           A projection, not a promise: it assumes the same return every month and the investment added at month-end.
           Real returns vary, and past returns do not guarantee future ones.
         </p>
-
-        <div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setContribution(Math.max(0, defaultContribution));
-              setReturnDraft(String(baseReturn));
-              setYearsDraft("5");
-              setStepUpEnabled(false);
-              setResetCount((count) => count + 1);
-            }}
-          >
-            Reset to my numbers
-          </Button>
-        </div>
       </CardContent>
     </Card>
   );
