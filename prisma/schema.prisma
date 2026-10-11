@@ -107,10 +107,31 @@ model Profile {
   research       SecurityResearch[]
   tags           Tag[]
   importSessions ImportSession[]
+  goal           InvestmentGoal?
 
   @@unique([userId, name])
   @@index([userId])
   @@map("profiles")
+}
+
+/// The profile's investment goal: reach targetAmount (USD, in today's money) by
+/// targetDate. One per profile for now; the unique profileId can be relaxed to
+/// allow several later.
+model InvestmentGoal {
+  id            String   @id @default(cuid())
+  profileId     String   @unique
+  name          String
+  targetAmount  Decimal  @db.Decimal(14, 2)
+  targetDate    DateTime @db.Date
+  /// Yearly inflation in %, applied to targetAmount up to targetDate. Null when off.
+  inflationRate Decimal? @db.Decimal(5, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("investment_goals")
 }
 
 /// Shared security master. Objective facts only; anything subjective belongs in

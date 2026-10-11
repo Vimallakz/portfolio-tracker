@@ -200,6 +200,28 @@ latest value comes back at the end. Under a year of history it is labelled an
 early estimate, because annualizing a few months magnifies them.
 Logic: `src/lib/portfolio/analytics/xirr.ts`.
 
+### Investment goal
+
+Each profile can have one goal: a name, a target amount and a target month,
+set on the planner (`investment_goals` table). The planner and the dashboard
+judge it with the same pace as the plan hero: your 6-month average investment
+(else 12-month) and your 1-year average return (else all-time).
+
+- **Inflation (optional):** when on, the target grows by the rate each year,
+  `target × (1 + rate)^(months / 12)`, so $10,000 in 3 years at 3% means
+  about $10,927 then.
+- **Needed each month:** the steady monthly amount that turns today's value
+  into the target by that month at your return,
+  `(target − value × (1 + r)^n) × r / ((1 + r)^n − 1)`, never below zero.
+- **Status:** your projected value at the target month against the target.
+  Within 2% is on track, above is ahead, below is behind; reached and missed
+  cover the current value already being there or the date having passed.
+- **Reach month:** the first month your pace gets there, looking up to 50
+  years ahead.
+
+The planner chart draws the goal as a dashed line with a dot at the target
+month. Logic: `src/lib/portfolio/planner/goal.ts`.
+
 ## Continuous integration
 
 `.github/workflows/ci.yml` runs on every push to `master` and every pull

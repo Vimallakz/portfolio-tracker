@@ -17,7 +17,9 @@ import { TabbedCard } from "@/components/shared/tabbed-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatSnapshotDate } from "@/lib/format/date";
 import { buildDashboard, buildHistory, parseTypeFilter } from "@/lib/portfolio/analytics/dashboard";
-import { buildPlanner } from "@/lib/portfolio/planner/planner";
+import { evaluateGoal } from "@/lib/portfolio/planner/goal";
+import { getGoal } from "@/lib/portfolio/planner/goal-queries";
+import { buildPlanner, planPace } from "@/lib/portfolio/planner/planner";
 import { listProfileSnapshots } from "@/lib/portfolio/snapshots/queries";
 import { getProfileContext } from "@/lib/profiles/profile-context";
 
@@ -46,7 +48,7 @@ export default async function DashboardPage({
   }
 
   const filter = parseTypeFilter((await searchParams).type);
-  const snapshots = await listProfileSnapshots(activeProfile.id);
+  const [snapshots, goal] = await Promise.all([listProfileSnapshots(activeProfile.id), getGoal(activeProfile.id)]);
   const dashboard = buildDashboard(snapshots, filter);
   const planner = buildPlanner(buildHistory(snapshots));
 
@@ -65,6 +67,22 @@ export default async function DashboardPage({
   }
 
   const isEmptySelection = dashboard.summary.holdingCount === 0;
+  const pace = planner ? planPace(planner) : null;
+  const goalSummary =
+    goal && planner && pace
+      ? {
+          goal,
+          evaluation: evaluateGoal({
+            goal,
+            startValue: planner.latest.currentValue,
+            startInvested: planner.latest.investedAmount,
+            monthlyContribution: pace.contribution,
+            monthlyReturn: pace.monthlyReturn,
+            asOf: planner.latest.snapshotDate,
+          }),
+          monthlyContribution: pace.contribution,
+        }
+      : null;
 
   return (
     <>
@@ -89,7 +107,9 @@ export default async function DashboardPage({
               <NeedsAttentionCard profileId={activeProfile.id} />
             </Suspense>
             <SinceLastSnapshotCard change={dashboard.sincePrevious} />
-            {planner ? <PlannerTeaserCard planner={planner} /> : null}
+            {planner ? (
+              <PlannerTeaserCard planner={planner} goal={goalSummary} />
+            ) : null}
           </div>
 
           <TabbedCard

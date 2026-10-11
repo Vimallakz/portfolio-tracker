@@ -2,9 +2,20 @@
 
 import { TriangleAlert } from "lucide-react";
 import { useId, useMemo, useState } from "react";
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ReferenceDot,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 import { useCurrency, useMoneyFormat } from "@/components/currency/currency-provider";
+import { MoneyInput, parseNumber } from "@/components/shared/money-input";
 import { SignedValue } from "@/components/shared/signed-value";
 import { Stat, StatStrip } from "@/components/shared/stat-strip";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -14,7 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { convertFromUsd, convertToUsd } from "@/lib/currency/currency";
+import { convertFromUsd } from "@/lib/currency/currency";
 import { formatCompactMoney, formatMoney, formatPercentage } from "@/lib/format/number";
 import { annualizeMonthlyReturn } from "@/lib/portfolio/planner/earnings";
 import {
@@ -37,48 +48,6 @@ const SCENARIO_SPREAD = 0.25;
 const HIGH_ANNUAL_RETURN = 25;
 
 const round2 = (value: number) => Math.round(value * 100) / 100;
-
-function parseNumber(draft: string): number | null {
-  if (draft.trim() === "") return null;
-  const value = Number(draft);
-  return Number.isFinite(value) ? value : null;
-}
-
-/** An amount typed in the display currency and reported in USD. Re-renders its text when the currency changes. */
-function MoneyInput({ id, usdValue, onChange }: { id: string; usdValue: number; onChange: (usd: number) => void }) {
-  const { currency, rate } = useCurrency();
-  const toDraft = (usd: number) => String(round2(convertFromUsd(usd, currency, rate)));
-
-  const [draft, setDraft] = useState(() => toDraft(usdValue));
-  const [draftCurrency, setDraftCurrency] = useState(currency);
-
-  if (draftCurrency !== currency) {
-    setDraftCurrency(currency);
-    setDraft(toDraft(usdValue));
-  }
-
-  return (
-    <div className="relative">
-      <span className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-sm">
-        {currency === "INR" ? "₹" : "$"}
-      </span>
-      <Input
-        id={id}
-        type="number"
-        inputMode="decimal"
-        min={0}
-        step="any"
-        className="pl-6 tabular-nums"
-        value={draft}
-        onChange={(event) => {
-          setDraft(event.target.value);
-          const value = parseNumber(event.target.value);
-          if (value !== null) onChange(convertToUsd(value, currency, rate));
-        }}
-      />
-    </div>
-  );
-}
 
 function PillButton({ pressed, onClick, children }: { pressed: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
@@ -117,6 +86,8 @@ type ProjectionCalculatorProps = {
   /** Monthly return, 0–100 scale. Null when nothing is measured yet. */
   averageReturn: number | null;
   returnSource: string;
+  /** The profile's goal, drawn as a target line: amount in USD at its month, months from today. */
+  goal?: { name: string; target: number; month: number } | null;
 };
 
 export function ProjectionCalculator({
@@ -126,6 +97,7 @@ export function ProjectionCalculator({
   contributionSource,
   averageReturn,
   returnSource,
+  goal = null,
 }: ProjectionCalculatorProps) {
   const id = useId();
   const { currency, rate } = useCurrency();
@@ -190,6 +162,7 @@ export function ProjectionCalculator({
   const tickStep = totalMonths <= 24 ? 3 : totalMonths <= 120 ? 12 : 24;
   const ticks = projection.points.filter((point) => point.month % tickStep === 0).map((point) => point.month);
   const annualReturn = annualizeMonthlyReturn(monthlyReturn);
+  const goalTarget = goal ? convertFromUsd(goal.target, currency, rate) : null;
   const finalContribution = projection.points.at(-1)!.contribution;
 
   return (
@@ -400,6 +373,7 @@ export function ProjectionCalculator({
                     axisLine={false}
                   />
                   <YAxis
+                    domain={[0, (dataMax: number) => Math.max(dataMax, goalTarget ?? 0)]}
                     tickFormatter={(value: number) => formatCompactMoney(value, currency)}
                     tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
                     tickLine={false}
@@ -416,6 +390,23 @@ export function ProjectionCalculator({
                       fontSize: 12,
                     }}
                   />
+                  {goal && goalTarget !== null ? (
+                    <ReferenceLine
+                      y={goalTarget}
+                      stroke="var(--chart-4)"
+                      strokeDasharray="6 4"
+                      strokeWidth={1.5}
+                      label={{
+                        value: `Goal: ${goal.name}`,
+                        position: "insideTopLeft",
+                        fill: "var(--muted-foreground)",
+                        fontSize: 11,
+                      }}
+                    />
+                  ) : null}
+                  {goal && goalTarget !== null && goal.month > 0 && goal.month <= totalMonths ? (
+                    <ReferenceDot x={goal.month} y={goalTarget} r={4} fill="var(--chart-4)" stroke="var(--background)" />
+                  ) : null}
                   <Area
                     dataKey="value"
                     name="Projected value"

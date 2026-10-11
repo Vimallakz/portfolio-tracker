@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { MarketTilesSection, MarketTilesSkeleton } from "@/components/benchmark/market-comparison-section";
 import { Money } from "@/components/currency/money";
 import { ContributionsChart } from "@/components/planner/contributions-chart";
+import { GoalCard } from "@/components/planner/goal-card";
 import { PlannerHero } from "@/components/planner/planner-hero";
 import { ProjectionCalculator } from "@/components/planner/projection-calculator";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -20,8 +21,10 @@ import { calculateMoneyWeightedReturn } from "@/lib/portfolio/analytics/xirr";
 import { sinceStartReturn, type YourPeriodReturn } from "@/lib/portfolio/benchmark/benchmark";
 import type { EarningsSummary } from "@/lib/portfolio/planner/earnings";
 import { annualizeMonthlyReturn } from "@/lib/portfolio/planner/earnings";
-import { buildPlanner, RELIABLE_HISTORY_MONTHS } from "@/lib/portfolio/planner/planner";
-import { DEFAULT_PLAN_YEARS, planReturn, projectInvestment } from "@/lib/portfolio/planner/projection";
+import { evaluateGoal } from "@/lib/portfolio/planner/goal";
+import { getGoal } from "@/lib/portfolio/planner/goal-queries";
+import { buildPlanner, planPace, RELIABLE_HISTORY_MONTHS } from "@/lib/portfolio/planner/planner";
+import { DEFAULT_PLAN_YEARS, projectInvestment } from "@/lib/portfolio/planner/projection";
 import { listProfileSnapshots } from "@/lib/portfolio/snapshots/queries";
 import { getProfileContext } from "@/lib/profiles/profile-context";
 
@@ -85,7 +88,8 @@ export default async function PlannerPage() {
     );
   }
 
-  const history = buildHistory(await listProfileSnapshots(activeProfile.id));
+  const [snapshots, goal] = await Promise.all([listProfileSnapshots(activeProfile.id), getGoal(activeProfile.id)]);
+  const history = buildHistory(snapshots);
   const planner = buildPlanner(history);
   const sinceStart = sinceStartReturn(history);
 
@@ -105,7 +109,7 @@ export default async function PlannerPage() {
 
   const { latest, lastContribution, sixMonthContribution, twelveMonthContribution, earnings } = planner;
 
-  const defaultContribution = sixMonthContribution.average ?? twelveMonthContribution.average ?? 0;
+  const { contribution, averageReturn, monthlyReturn } = planPace(planner);
   const contributionSource =
     sixMonthContribution.average !== null
       ? "your 6-month average"
@@ -113,7 +117,6 @@ export default async function PlannerPage() {
         ? "your 12-month average"
         : "zero until a second month is tracked";
 
-  const averageReturn = earnings.oneYear?.averageMonthlyReturn ?? earnings.allTime?.averageMonthlyReturn ?? null;
   const returnSource =
     earnings.oneYear?.averageMonthlyReturn != null
       ? "your 1-year average"
@@ -122,8 +125,6 @@ export default async function PlannerPage() {
         : "about 10% a year, used until your own returns are measured";
 
   const measuredMonths = earnings.allTime?.monthsCovered ?? 0;
-  const contribution = Math.max(0, defaultContribution);
-  const monthlyReturn = planReturn(averageReturn);
   const projection = projectInvestment({
     startValue: latest.currentValue,
     startInvested: latest.investedAmount,
@@ -132,6 +133,16 @@ export default async function PlannerPage() {
     months: DEFAULT_PLAN_YEARS * 12,
     stepUp: null,
   });
+  const goalEvaluation = goal
+    ? evaluateGoal({
+        goal,
+        startValue: latest.currentValue,
+        startInvested: latest.investedAmount,
+        monthlyContribution: contribution,
+        monthlyReturn,
+        asOf: latest.snapshotDate,
+      })
+    : null;
 
   return (
     <>
@@ -165,6 +176,14 @@ export default async function PlannerPage() {
           sinceStart={sinceStart}
           yearly={calculateMoneyWeightedReturn(history)}
           history={history}
+        />
+
+        <GoalCard
+          goal={goal}
+          evaluation={goalEvaluation}
+          currentValue={latest.currentValue}
+          monthlyContribution={contribution}
+          asOf={latest.snapshotDate}
         />
 
         <TabbedCard
@@ -257,10 +276,15 @@ export default async function PlannerPage() {
         <ProjectionCalculator
           currentValue={latest.currentValue}
           investedAmount={latest.investedAmount}
-          defaultContribution={defaultContribution}
+          defaultContribution={contribution}
           contributionSource={contributionSource}
           averageReturn={averageReturn}
           returnSource={returnSource}
+          goal={
+            goal && goalEvaluation
+              ? { name: goal.name, target: goalEvaluation.targetAtDate, month: Math.max(0, goalEvaluation.monthsLeft) }
+              : null
+          }
         />
       </div>
     </>
