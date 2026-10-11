@@ -1,5 +1,7 @@
 import { Info, Upload } from "lucide-react";
+import { Suspense } from "react";
 
+import { MarketTilesSection, MarketTilesSkeleton } from "@/components/benchmark/market-comparison-section";
 import { Money } from "@/components/currency/money";
 import { ContributionsChart } from "@/components/planner/contributions-chart";
 import { PlannerStat } from "@/components/planner/planner-stat";
@@ -11,6 +13,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { formatSnapshotDate } from "@/lib/format/date";
 import { formatPercentage } from "@/lib/format/number";
 import { buildHistory } from "@/lib/portfolio/analytics/dashboard";
+import { addMonths } from "@/lib/portfolio/analytics/monthly-performance";
+import { sinceStartReturn, type YourPeriodReturn } from "@/lib/portfolio/benchmark/benchmark";
 import type { EarningsSummary } from "@/lib/portfolio/planner/earnings";
 import { annualizeMonthlyReturn } from "@/lib/portfolio/planner/earnings";
 import { buildPlanner, RELIABLE_HISTORY_MONTHS } from "@/lib/portfolio/planner/planner";
@@ -24,6 +28,13 @@ const formatMonth = (month: string) => monthLong.format(new Date(`${month}-01T00
 
 function monthsNote(counted: number, window: number) {
   return counted < window ? `Per month · ${counted} of ${window} months tracked` : "Per month";
+}
+
+/** The same since-start return the market comparison uses, so the two never disagree. */
+function sinceStartNote(result: YourPeriodReturn) {
+  return result.yourReturn === null
+    ? undefined
+    : `${formatPercentage(result.yourReturn)} since ${formatMonth(addMonths(result.fromMonth, 1))}`;
 }
 
 function EarningsStat({ label, summary, detail }: { label: string; summary: EarningsSummary | null; detail?: string }) {
@@ -66,7 +77,9 @@ export default async function PlannerPage() {
     );
   }
 
-  const planner = buildPlanner(buildHistory(await listProfileSnapshots(activeProfile.id)));
+  const history = buildHistory(await listProfileSnapshots(activeProfile.id));
+  const planner = buildPlanner(history);
+  const sinceStart = sinceStartReturn(history);
 
   if (!planner) {
     return (
@@ -169,12 +182,30 @@ export default async function PlannerPage() {
               label="All-time average"
               summary={earnings.allTime}
               detail={
-                earnings.allTime?.averageMonthlyReturn != null
-                  ? `${formatPercentage(annualizeMonthlyReturn(earnings.allTime.averageMonthlyReturn), 1)} a year`
-                  : undefined
+                sinceStart
+                  ? sinceStartNote(sinceStart)
+                  : earnings.allTime?.averageMonthlyReturn != null
+                    ? `${formatPercentage(annualizeMonthlyReturn(earnings.allTime.averageMonthlyReturn), 1)} a year`
+                    : undefined
               }
             />
           </div>
+        </section>
+
+        <section aria-labelledby="market-heading" className="grid gap-3">
+          <div>
+            <h2 id="market-heading" className="text-sm font-semibold">
+              Against the market
+            </h2>
+            <p className="text-muted-foreground text-xs">
+              Your return since the start of your first snapshot&apos;s month, as if that money went in on day one,
+              against the S&amp;P 500 and Nasdaq 100 bought at the previous month&apos;s last close and held to the
+              latest month&apos;s last close.
+            </p>
+          </div>
+          <Suspense fallback={<MarketTilesSkeleton />}>
+            <MarketTilesSection history={history} />
+          </Suspense>
         </section>
 
         <ProjectionCalculator

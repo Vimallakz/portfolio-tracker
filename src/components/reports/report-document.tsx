@@ -1,10 +1,17 @@
 import type { ReactNode } from "react";
 
+import {
+  MarketComparisonNote,
+  MarketStatTiles,
+  MarketVerdict,
+  MonthlyMarketTable,
+} from "@/components/benchmark/market-comparison-summary";
 import { Money } from "@/components/currency/money";
 import { ReportCurrency, ReportGainChart, ReportValueChart } from "@/components/reports/report-charts";
 import { SignedValue } from "@/components/shared/signed-value";
 import { formatSnapshotDate } from "@/lib/format/date";
 import { formatPercentage } from "@/lib/format/number";
+import type { MarketPeriod } from "@/lib/portfolio/benchmark/benchmark";
 import type { PortfolioReport } from "@/lib/portfolio/reports/report";
 import { cn } from "@/lib/utils";
 
@@ -41,10 +48,13 @@ function Section({ title, description, children }: { title: string; description?
 
 export function ReportDocument({
   report,
+  market,
   profileName,
   generatedOn,
 }: {
   report: PortfolioReport;
+  /** Null when there is no report for the period. */
+  market: { period: MarketPeriod; months: MarketPeriod[] } | null;
   profileName: string;
   /** "YYYY-MM-DD". */
   generatedOn: string;
@@ -111,6 +121,18 @@ export function ReportDocument({
           </Step>
         </dl>
       </Section>
+
+      {market ? (
+        <Section
+          title="Against the market"
+          description="Your return against the S&P 500 and Nasdaq 100 bought at the last close of the month before and held to the last close of the month."
+        >
+          <MarketVerdict period={market.period} />
+          <MarketStatTiles period={market.period} />
+          {market.months.length > 1 ? <MonthlyMarketTable months={market.months} /> : null}
+          <MarketComparisonNote period={market.period} />
+        </Section>
+      ) : null}
 
       <Section title="Value vs invested" description="Portfolio value and money invested at each snapshot in the period.">
         <ReportValueChart series={report.valueSeries} />

@@ -165,6 +165,27 @@ model SecurityAnalystData {
   @@map("security_analyst_data")
 }
 
+/// Daily dividend-adjusted closes of the index funds used as benchmarks, from
+/// Yahoo Finance. Shared by every profile. Adjusted closes are rewritten after
+/// each dividend, so a refresh replaces a symbol's whole series.
+model BenchmarkPrice {
+  symbol String
+  date   DateTime @db.Date
+  close  Decimal  @db.Decimal(20, 6)
+
+  @@id([symbol, date])
+  @@map("benchmark_prices")
+}
+
+/// When a benchmark symbol was last downloaded, and from which date.
+model BenchmarkSync {
+  symbol    String   @id
+  fromDate  DateTime @db.Date
+  fetchedAt DateTime
+
+  @@map("benchmark_syncs")
+}
+
 /// Remembers how a CSV "Stock Name" maps to a Security, so a manual mapping is
 /// made once and reused by every later import.
 model SecurityAlias {

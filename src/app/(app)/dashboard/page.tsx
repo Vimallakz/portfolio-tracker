@@ -1,6 +1,7 @@
 import { Upload } from "lucide-react";
 import { Suspense } from "react";
 
+import { MarketComparisonSection, MarketComparisonSkeleton } from "@/components/benchmark/market-comparison-section";
 import { AllocationCard } from "@/components/dashboard/allocation-card";
 import { LargestHoldingsCard } from "@/components/dashboard/largest-holdings-card";
 import { MonthlyPerformanceCard } from "@/components/dashboard/monthly-performance-card";
@@ -81,6 +82,10 @@ export default async function DashboardPage({
       ) : (
         <div className="grid gap-4">
           <PortfolioSummary summary={dashboard.summary} />
+
+          <Suspense fallback={<MarketComparisonSkeleton />}>
+            <MarketComparisonSection history={dashboard.history} />
+          </Suspense>
 
           <div className="grid gap-4 lg:grid-cols-3">
             <div className="grid content-start gap-4 lg:col-span-2">

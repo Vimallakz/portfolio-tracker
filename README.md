@@ -169,6 +169,33 @@ value change includes money added or withdrawn rather than claiming a market
 return. All figures come from `buildDashboard()` in
 `src/lib/portfolio/analytics/dashboard.ts`, which is pure and unit-tested.
 
+### You vs the market (benchmarks)
+
+Every period (a month, a report range, or since your first snapshot) uses one
+calculation on the dashboard, planner and reports:
+
+- **Your return:** market gain over the money at work, which is the starting
+  value plus half the money added (Modified Dietz).
+- **Index return:** SPY (S&P 500) and QQQ (Nasdaq 100) bought once at the last
+  close of the month before the period and held to the last close of its final
+  month (the 28th, 30th or 31st, whatever your snapshot date).
+- **Gap in dollars:** the index's change applied to your money at work.
+- **First month:** the first snapshot's money counts as invested at the start
+  of its month, so a June 30 first snapshot is compared from May's last close,
+  and since-start figures begin there too.
+
+Daily dividend-adjusted closes come from Yahoo Finance's public chart
+endpoint (no key) and are stored in `benchmark_prices`, refreshed at most twice
+a day. If Yahoo is unreachable, the comparison shows your own return only.
+Logic: `src/lib/portfolio/benchmark/`.
+
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every push to `master` and every pull
+request: `npm ci`, typecheck, lint, unit tests and `npm run build:app`. It uses
+a placeholder `DATABASE_URL` and never touches a database; migrations run only
+in the deploy build.
+
 ## Scripts
 
 ```bash

@@ -13,10 +13,10 @@ todos:
     status: pending
   - id: xirr
     content: XIRR annualized return from snapshot cash flows on Dashboard, Planner, Reports
-    status: pending
+    status: completed
   - id: ci
     content: "GitHub Actions CI: typecheck, lint, test, build"
-    status: pending
+    status: completed
   - id: ai-review
     content: AI monthly review narrative per snapshot via Neon AI Gateway
     status: pending

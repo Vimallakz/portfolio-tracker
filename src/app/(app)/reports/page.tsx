@@ -6,9 +6,12 @@ import { ReportDocument } from "@/components/reports/report-document";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { buildHistory } from "@/lib/portfolio/analytics/dashboard";
+import { addMonths } from "@/lib/portfolio/analytics/monthly-performance";
+import { compareMonths, comparePeriod } from "@/lib/portfolio/benchmark/benchmark";
+import { getBenchmarkPrices } from "@/lib/portfolio/benchmark/prices";
 import { monthOf } from "@/lib/portfolio/planner/contributions";
 import { listMonths, listQuarters, parseReportPeriod } from "@/lib/portfolio/reports/period";
-import { buildReport } from "@/lib/portfolio/reports/report";
+import { buildReport, type PortfolioReport } from "@/lib/portfolio/reports/report";
 import { todayInTimeZone } from "@/lib/portfolio/reminders/upload-reminder";
 import { listProfileSnapshots } from "@/lib/portfolio/snapshots/queries";
 import { getProfileContext } from "@/lib/profiles/profile-context";
@@ -16,6 +19,30 @@ import { getProfileContext } from "@/lib/profiles/profile-context";
 export const metadata = { title: "Reports | Portfolio Intelligence" };
 
 const DESCRIPTION = "A summary of any month, quarter or range, ready to save as PDF.";
+
+/**
+ * The period against each index from the last close of the starting
+ * snapshot's month to the last close of the period's final month. A period
+ * holding the first snapshot counts as invested at the start of its month.
+ */
+async function compareReportWithMarket(report: PortfolioReport) {
+  const firstDate = report.startDate ?? report.valueSeries[0].snapshotDate;
+  const prices = await getBenchmarkPrices(firstDate);
+
+  return {
+    period: comparePeriod(
+      {
+        fromMonth: report.startDate ? monthOf(report.startDate) : addMonths(monthOf(firstDate), -1),
+        toMonth: report.period.end,
+        yourReturn: report.periodReturn,
+        yourGain: report.marketGain,
+        base: report.moneyAtWork,
+      },
+      prices,
+    ),
+    months: compareMonths(report.monthly, prices),
+  };
+}
 
 export default async function ReportsPage({
   searchParams,
@@ -58,6 +85,7 @@ export default async function ReportsPage({
   const span = { first: monthOf(first.snapshotDate), latest: monthOf(latest.snapshotDate) };
   const period = parseReportPeriod(params, span);
   const report = buildReport(history, period);
+  const market = report ? await compareReportWithMarket(report) : null;
 
   return (
     <>
@@ -69,7 +97,12 @@ export default async function ReportsPage({
         <ReportControls period={period} months={listMonths(span)} quarters={listQuarters(span)} />
 
         {report ? (
-          <ReportDocument report={report} profileName={activeProfile.name} generatedOn={todayInTimeZone(new Date())} />
+          <ReportDocument
+            report={report}
+            market={market}
+            profileName={activeProfile.name}
+            generatedOn={todayInTimeZone(new Date())}
+          />
         ) : (
           <EmptyState
             title={`No snapshot in ${period.label}`}

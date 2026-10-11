@@ -21,6 +21,8 @@ export type PortfolioReport = {
   endValue: number;
   /** Market gain over the money at work (Modified Dietz), 0–100 scale. Null without a base. */
   periodReturn: number | null;
+  /** Money at work: the starting value plus half the money invested. Null when not positive. */
+  moneyAtWork: number | null;
   endInvested: number;
   /** Profit or loss on everything invested, at the end of the period. */
   endPnl: number;
@@ -60,7 +62,9 @@ export function buildReport(history: HistoryPoint[], period: ReportPeriod): Port
 
   const moneyInvested = end.investedAmount - startInvested;
   const marketGain = end.pnlAmount - startPnl;
-  const base = start ? startValue + moneyInvested / 2 : moneyInvested;
+  // Without a start, the first snapshot's money counts as invested at the start of its month.
+  const firstInvested = inside[0].investedAmount;
+  const base = start ? startValue + moneyInvested / 2 : firstInvested + (moneyInvested - firstInvested) / 2;
 
   const monthly = buildMonthlyPerformance(history).filter(
     (entry) => entry.month >= period.start && entry.month <= period.end,
@@ -76,6 +80,7 @@ export function buildReport(history: HistoryPoint[], period: ReportPeriod): Port
     marketGain,
     endValue: end.currentValue,
     periodReturn: base > 0 ? (marketGain / base) * 100 : null,
+    moneyAtWork: base > 0 ? base : null,
     endInvested: end.investedAmount,
     endPnl: end.pnlAmount,
     returnOnInvested: end.investedAmount > 0 ? (end.pnlAmount / end.investedAmount) * 100 : null,
