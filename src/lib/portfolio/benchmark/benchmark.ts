@@ -32,11 +32,11 @@ export type MarketPeriod = {
   fromMonth: string;
   /** "YYYY-MM": to this month's last close. */
   toMonth: string;
-  /** Your market return over the period (Modified Dietz), 0–100 scale. */
+  /** Your market gain over the money at work, 0–100 scale. */
   yourReturn: number | null;
   /** Your market gain, excluding new money. */
   yourGain: number;
-  /** Money at work: starting value plus half the money added. */
+  /** Money at work: starting value plus the money added, as if all in at the start. */
   base: number | null;
   /** Benchmarks with prices for both ends. Empty when none could be loaded. */
   indexes: IndexMove[];
@@ -139,8 +139,8 @@ export type YourPeriodReturn = Pick<MarketPeriod, "fromMonth" | "toMonth" | "you
 
 /**
  * Your market return from zero, measured like a report over the same range:
- * the first snapshot's money counts as invested at the start of its month and
- * later money from mid-period. Null without a snapshot.
+ * everything invested counts as in from the start of the first snapshot's
+ * month. Null without a snapshot.
  */
 export function sinceStartReturn(history: HistoryPoint[]): YourPeriodReturn | null {
   const first = history[0];
@@ -151,7 +151,7 @@ export function sinceStartReturn(history: HistoryPoint[]): YourPeriodReturn | nu
   }
 
   const yourGain = last.pnlAmount;
-  const base = first.investedAmount + (last.investedAmount - first.investedAmount) / 2;
+  const base = last.investedAmount;
 
   return {
     fromMonth: addMonths(monthOf(first.snapshotDate), -1),

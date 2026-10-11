@@ -8,7 +8,7 @@ export type MonthlyPerformance = {
   month: string;
   /** Market gain in USD, excluding money added or withdrawn. Null when the month has no measurable change. */
   gain: number | null;
-  /** Modified Dietz return for the month, 0–100 scale. */
+  /** Gain over the starting value plus the money added, 0–100 scale. */
   returnPercentage: number | null;
   /** Money at work the return is measured on (USD): gain / base = return. Null when not measurable. */
   base: number | null;
@@ -47,8 +47,9 @@ const emptyMonth = (month: string): MonthlyPerformance => ({
  * from each month's last snapshot to the previous month-end snapshot.
  *
  * Gain is the change in unrealised P&L, so new money does not count as
- * performance. The return divides it by the starting value plus half the net
- * money added (Modified Dietz), which assumes flows landed mid-period.
+ * performance. The return divides it by the starting value plus the net money
+ * added, as if the new money went in at the start of the month, the same way
+ * the benchmarks are measured.
  * Snapshots are sparse, so a month with no snapshot is empty and the next
  * month with one carries the whole change since the last snapshot.
  *
@@ -91,7 +92,7 @@ export function buildMonthlyPerformance(history: HistoryPoint[]): MonthlyPerform
     } else {
       const gain = point.pnlAmount - previous.pnlAmount;
       const netFlow = point.investedAmount - previous.investedAmount;
-      const base = previous.currentValue + netFlow / 2;
+      const base = previous.currentValue + netFlow;
 
       months.push({
         month,

@@ -137,8 +137,8 @@ describe("buildDashboard", () => {
       increasedHoldings: 1,
       reducedHoldings: 0,
     });
-    // -40 / (1180 + 1000 / 2)
-    expect(data.sincePrevious!.marketReturnPercentage).toBeCloseTo(-2.381, 3);
+    // -40 / (1180 + 1000)
+    expect(data.sincePrevious!.marketReturnPercentage).toBeCloseTo(-1.835, 3);
   });
 
   it("applies the type filter everywhere except allocation", () => {

@@ -90,7 +90,7 @@ export type SincePrevious = {
   currentPnlAmount: number;
   /** Market gain or loss: the change in P&L, which excludes new money. */
   pnlAmountChange: number;
-  /** pnlAmountChange over the previous value plus half the money added (Modified Dietz), 0–100 scale. Null without a base. */
+  /** pnlAmountChange over the previous value plus the money added, 0–100 scale. Null without a base. */
   marketReturnPercentage: number | null;
   newHoldings: number;
   removedHoldings: number;
@@ -233,7 +233,7 @@ export function calculateSincePrevious(previous: SnapshotRow, latest: SnapshotRo
   const { summary } = compareSnapshots(previous.holdings.map(toComparable), latest.holdings.map(toComparable));
   const investedChange = calculateChange(before.investedAmount, after.investedAmount);
   const pnlChange = calculateChange(before.pnlAmount, after.pnlAmount);
-  const base = before.currentValue.add(investedChange.div(2));
+  const base = before.currentValue.add(investedChange);
 
   return {
     previousSnapshotDate: previous.snapshotDate,

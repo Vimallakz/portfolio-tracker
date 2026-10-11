@@ -111,11 +111,11 @@ describe("compareMonths and compareSinceStart", () => {
   it("measures from the start of the first snapshot's month, like a report over the same range", () => {
     const period = compareSinceStart(history, new Map([["SPY", spy]]));
 
-    // Gain 30 over 300 + 600 / 2 at work; the index from 98 (May 29) to 107.1 (Aug 28).
-    expect(period).toMatchObject({ fromMonth: "2026-05", toMonth: "2026-08", yourGain: 30, base: 600 });
-    expect(period?.yourReturn).toBeCloseTo(5, 6);
+    // Gain 30 over all 900 invested; the index from 98 (May 29) to 107.1 (Aug 28).
+    expect(period).toMatchObject({ fromMonth: "2026-05", toMonth: "2026-08", yourGain: 30, base: 900 });
+    expect(period?.yourReturn).toBeCloseTo(3.3333, 4);
     expect(period?.indexes[0].change).toBeCloseTo(9.2857, 4);
-    expect(period?.indexes[0].gain).toBeCloseTo(55.714, 3);
+    expect(period?.indexes[0].gain).toBeCloseTo(83.571, 3);
   });
 
   it("compares a single snapshot from the start of its month", () => {

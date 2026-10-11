@@ -120,8 +120,8 @@ describe("summarizeEarnings", () => {
     const summary = summarizeEarnings(months, null)!;
 
     expect(summary.totalGain).toBeCloseTo(20.99);
-    // 20.99 / (312.72 + 456.41 + 756.45 + 1075.82)
-    expect(summary.averageMonthlyReturn).toBeCloseTo(0.8069, 3);
+    // 20.99 / (312.72 + 612.77 + 912.81 + 1251.5)
+    expect(summary.averageMonthlyReturn).toBeCloseTo(0.6793, 3);
   });
 
   it("counts the first snapshot's P&L as its month", () => {

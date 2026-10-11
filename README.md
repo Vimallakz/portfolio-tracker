@@ -175,7 +175,7 @@ Every period (a month, a report range, or since your first snapshot) uses one
 calculation on the dashboard, planner and reports:
 
 - **Your return:** market gain over the money at work, which is the starting
-  value plus half the money added (Modified Dietz).
+  value plus all the money added, as if it went in at the start.
 - **Index return:** SPY (S&P 500) and QQQ (Nasdaq 100) bought once at the last
   close of the month before the period and held to the last close of its final
   month (the 28th, 30th or 31st, whatever your snapshot date).

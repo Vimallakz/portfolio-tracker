@@ -195,8 +195,8 @@ export function MarketComparisonNote({ period }: { period: MarketPeriod }) {
       {period.indexes.length === 0
         ? "Index prices could not be loaded right now, so only your own return is shown. "
         : "Indexes are measured as if bought once at the last close of the month before and held to the last close of the month (SPY and QQQ, dividends included, prices from Yahoo Finance). "}
-      Your return is the market gain over the money at work, counting new money from mid-month, the same as the
-      period return in reports.
+      Your return is the market gain over the money at work: the starting value plus the money added, as if it all
+      went in at the start too.
       {period.isMonthToDate ? " The current month is still running, so its index figure is month to date." : ""}
     </p>
   );

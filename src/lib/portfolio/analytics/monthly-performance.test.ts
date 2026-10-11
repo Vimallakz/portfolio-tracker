@@ -42,8 +42,8 @@ describe("buildMonthlyPerformance", () => {
 
     // P&L went from 0 to 100; 500 of the value increase was new money.
     expect(august.gain).toBe(100);
-    // Modified Dietz: 100 / (1000 + 500 / 2).
-    expect(august.returnPercentage).toBeCloseTo(8);
+    // New money counts as in from the start: 100 / (1000 + 500).
+    expect(august.returnPercentage).toBeCloseTo(6.667, 3);
     expect(august.fromDate).toBe("2026-07-31");
   });
 

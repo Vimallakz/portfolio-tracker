@@ -73,8 +73,8 @@ describe("buildReport", () => {
     expect(report.marketGain).toBeCloseTo(59.01);
     expect(report.endValue).toBeCloseTo(1310.51);
     expect(report.startValue + report.moneyInvested + report.marketGain).toBeCloseTo(report.endValue);
-    // 59.01 / (900.14 + 351.36 / 2)
-    expect(report.periodReturn).toBeCloseTo(5.485, 2);
+    // 59.01 / (900.14 + 351.36)
+    expect(report.periodReturn).toBeCloseTo(4.715, 2);
     expect(report.returnOnInvested).toBeCloseTo(1.628, 2);
     expect(report.isPartial).toBe(false);
   });

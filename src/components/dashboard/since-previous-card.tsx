@@ -127,7 +127,7 @@ export function SincePreviousCard({
         </div>
 
         <p className="text-muted-foreground text-xs">
-          The return % divides the market gain by the earlier value plus half the new money, as if it arrived mid-way.
+          The return % divides the market gain by the earlier value plus the new money.
         </p>
       </CardContent>
     </Card>
