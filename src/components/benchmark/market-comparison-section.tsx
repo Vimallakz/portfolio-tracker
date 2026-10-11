@@ -1,10 +1,11 @@
 import { MarketComparisonCard } from "@/components/benchmark/market-comparison-card";
 import {
   MarketComparisonNote,
+  MarketPills,
   MarketStatTiles,
   MarketVerdict,
 } from "@/components/benchmark/market-comparison-summary";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { HistoryPoint } from "@/lib/portfolio/analytics/dashboard";
 import { buildMonthlyPerformance } from "@/lib/portfolio/analytics/monthly-performance";
@@ -29,8 +30,18 @@ async function loadComparison(history: HistoryPoint[]) {
 }
 
 /** Streams in behind Suspense, since index prices may be downloaded first. */
-export async function MarketComparisonSection({ history }: { history: HistoryPoint[] }) {
+export async function MarketComparisonSection({
+  history,
+  embedded = false,
+}: {
+  history: HistoryPoint[];
+  embedded?: boolean;
+}) {
   const comparison = await loadComparison(history);
+
+  if (!comparison && embedded) {
+    return <p className="text-muted-foreground text-sm">{NEEDS_A_SNAPSHOT}</p>;
+  }
 
   if (!comparison) {
     return (
@@ -43,7 +54,14 @@ export async function MarketComparisonSection({ history }: { history: HistoryPoi
     );
   }
 
-  return <MarketComparisonCard {...comparison} />;
+  return <MarketComparisonCard {...comparison} embedded={embedded} />;
+}
+
+/** Since-start pills against each index, or nothing when there is no comparison yet. */
+export async function MarketPillsSection({ history, className }: { history: HistoryPoint[]; className?: string }) {
+  const comparison = await loadComparison(history);
+
+  return comparison ? <MarketPills period={comparison.sinceStart} className={className} /> : null;
 }
 
 /** The since-start comparison as tiles only, for pages that already chart the portfolio. */
@@ -73,24 +91,5 @@ export function MarketTilesSkeleton() {
         <Skeleton className="h-28" />
       </div>
     </div>
-  );
-}
-
-export function MarketComparisonSkeleton() {
-  return (
-    <Card aria-busy="true">
-      <CardHeader>
-        <Skeleton className="h-5 w-40" />
-        <Skeleton className="h-4 w-72" />
-      </CardHeader>
-      <CardContent className="grid gap-3">
-        <div className="grid gap-3 sm:grid-cols-3">
-          <Skeleton className="h-28" />
-          <Skeleton className="h-28" />
-          <Skeleton className="h-28" />
-        </div>
-        <Skeleton className="h-56" />
-      </CardContent>
-    </Card>
   );
 }

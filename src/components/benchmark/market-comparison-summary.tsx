@@ -56,6 +56,47 @@ export function MarketVerdict({ period }: { period: MarketPeriod }) {
   );
 }
 
+/** "S&P 500 +1.32% · you beat it by 1.30% (+$10.39)" pills: each index's move and your gap to it. */
+export function MarketPills({ period, className }: { period: MarketPeriod; className?: string }) {
+  if (period.yourReturn === null || period.indexes.length === 0) {
+    return null;
+  }
+
+  return (
+    <ul className={cn("flex flex-wrap gap-2", className)} aria-label="Against the market">
+      {period.indexes.map((move) => {
+        const gap = gapOf(period, move)!;
+        const better = gap >= 0;
+
+        return (
+          <li
+            key={move.symbol}
+            className={cn(
+              "rounded-full border px-3 py-1 text-xs font-medium tabular-nums",
+              better ? "border-positive/30 bg-positive/10 text-positive" : "border-negative/30 bg-negative/10 text-negative",
+            )}
+          >
+            <span className="text-foreground">
+              {move.label} {formatPercentage(move.change)}
+            </span>
+            <span aria-hidden="true" className="opacity-50">
+              {" "}
+              ·{" "}
+            </span>
+            you {better ? "beat it" : "trail"} by {formatGap(gap)}
+            {move.gain !== null ? (
+              <>
+                {" "}
+                (<Money value={period.yourGain - move.gain} change />)
+              </>
+            ) : null}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 function Swatch({ color }: { color: string }) {
   return <span aria-hidden="true" className="size-2 rounded-full" style={{ backgroundColor: color }} />;
 }

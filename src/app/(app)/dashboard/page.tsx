@@ -1,19 +1,20 @@
 import { Upload } from "lucide-react";
 import { Suspense } from "react";
 
-import { MarketComparisonSection, MarketComparisonSkeleton } from "@/components/benchmark/market-comparison-section";
-import { AllocationCard } from "@/components/dashboard/allocation-card";
+import { MarketComparisonSection } from "@/components/benchmark/market-comparison-section";
 import { LargestHoldingsCard } from "@/components/dashboard/largest-holdings-card";
 import { MonthlyPerformanceCard } from "@/components/dashboard/monthly-performance-card";
 import { NeedsAttentionCard, NeedsAttentionSkeleton } from "@/components/dashboard/needs-attention-card";
 import { PerformersCard } from "@/components/dashboard/performers-card";
 import { PlannerTeaserCard } from "@/components/dashboard/planner-teaser-card";
-import { PortfolioSummary } from "@/components/dashboard/portfolio-summary";
+import { PortfolioHero } from "@/components/dashboard/portfolio-hero";
 import { PortfolioValueChart } from "@/components/dashboard/portfolio-value-chart";
-import { SincePreviousCard } from "@/components/dashboard/since-previous-card";
+import { SinceLastSnapshotCard } from "@/components/dashboard/since-last-snapshot-card";
 import { TypeFilter } from "@/components/dashboard/type-filter";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
+import { TabbedCard } from "@/components/shared/tabbed-card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatSnapshotDate } from "@/lib/format/date";
 import { buildDashboard, buildHistory, parseTypeFilter } from "@/lib/portfolio/analytics/dashboard";
 import { buildPlanner } from "@/lib/portfolio/planner/planner";
@@ -81,43 +82,73 @@ export default async function DashboardPage({
         />
       ) : (
         <div className="grid gap-4">
-          <PortfolioSummary summary={dashboard.summary} />
+          <PortfolioHero summary={dashboard.summary} allocation={dashboard.allocation} history={dashboard.history} />
 
-          <Suspense fallback={<MarketComparisonSkeleton />}>
-            <MarketComparisonSection history={dashboard.history} />
-          </Suspense>
-
-          <div className="grid gap-4 lg:grid-cols-3">
-            <div className="grid content-start gap-4 lg:col-span-2">
-              <PortfolioValueChart history={dashboard.history} />
-              <MonthlyPerformanceCard history={dashboard.history} />
-            </div>
-            <div className="grid content-start gap-4">
-              <Suspense fallback={<NeedsAttentionSkeleton />}>
-                <NeedsAttentionCard profileId={activeProfile.id} />
-              </Suspense>
-              <AllocationCard allocation={dashboard.allocation} />
-              <SincePreviousCard change={dashboard.sincePrevious} />
-              {planner ? <PlannerTeaserCard planner={planner} /> : null}
-            </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            <Suspense fallback={<NeedsAttentionSkeleton />}>
+              <NeedsAttentionCard profileId={activeProfile.id} />
+            </Suspense>
+            <SinceLastSnapshotCard change={dashboard.sincePrevious} />
+            {planner ? <PlannerTeaserCard planner={planner} /> : null}
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <PerformersCard
-              title="Top performers"
-              description="Highest portfolio return (P&L %) among holdings in profit."
-              emptyMessage="No holdings are in profit in the latest snapshot."
-              performers={dashboard.topPerformers}
-            />
-            <PerformersCard
-              title="Worst performers"
-              description="Lowest portfolio return (P&L %) among holdings at a loss."
-              emptyMessage="No holdings are at a loss in the latest snapshot."
-              performers={dashboard.worstPerformers}
-            />
-          </div>
+          <TabbedCard
+            title="Performance"
+            storageKey="pit:dashboard-performance-tab"
+            defaultTab="growth"
+            tabs={[
+              { id: "growth", label: "Growth", content: <PortfolioValueChart history={dashboard.history} embedded /> },
+              { id: "monthly", label: "Monthly", content: <MonthlyPerformanceCard history={dashboard.history} embedded /> },
+              {
+                id: "market",
+                label: "vs Market",
+                content: (
+                  <Suspense fallback={<Skeleton className="h-72" />}>
+                    <MarketComparisonSection history={dashboard.history} embedded />
+                  </Suspense>
+                ),
+              },
+            ]}
+          />
 
-          <LargestHoldingsCard holdings={dashboard.largestHoldings} />
+          <TabbedCard
+            title="Holdings"
+            storageKey="pit:dashboard-holdings-tab"
+            defaultTab="largest"
+            tabs={[
+              {
+                id: "largest",
+                label: "Largest",
+                content: <LargestHoldingsCard holdings={dashboard.largestHoldings} embedded />,
+              },
+              {
+                id: "top",
+                label: "Top performers",
+                content: (
+                  <PerformersCard
+                    title="Top performers"
+                    description="Highest return (P&L %) among holdings in profit."
+                    emptyMessage="No holdings are in profit in the latest snapshot."
+                    performers={dashboard.topPerformers}
+                    embedded
+                  />
+                ),
+              },
+              {
+                id: "worst",
+                label: "Worst performers",
+                content: (
+                  <PerformersCard
+                    title="Worst performers"
+                    description="Lowest return (P&L %) among holdings at a loss."
+                    emptyMessage="No holdings are at a loss in the latest snapshot."
+                    performers={dashboard.worstPerformers}
+                    embedded
+                  />
+                ),
+              },
+            ]}
+          />
         </div>
       )}
     </>

@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import { prisma } from "@/lib/db/prisma";
 import { fetchDailyCloses } from "@/lib/market-data/yahoo";
 import { BENCHMARKS, type BenchmarkSymbol, type PricePoint } from "@/lib/portfolio/benchmark/benchmark";
@@ -57,8 +59,9 @@ async function refreshIfStale(symbol: BenchmarkSymbol, neededFrom: string) {
  * before `firstDate` ("YYYY-MM-DD"). Served from the database, which is
  * refreshed from Yahoo Finance when half a day old. Never throws: a symbol
  * that cannot be loaded is left out, and callers show the comparison without it.
+ * Cached per request, so several sections on one page share a single load.
  */
-export async function getBenchmarkPrices(firstDate: string): Promise<Map<BenchmarkSymbol, PricePoint[]>> {
+export const getBenchmarkPrices = cache(async (firstDate: string): Promise<Map<BenchmarkSymbol, PricePoint[]>> => {
   const neededFrom = daysBefore(`${firstDate.slice(0, 7)}-01`, LOOKBACK_DAYS);
   const prices = new Map<BenchmarkSymbol, PricePoint[]>();
 
@@ -85,4 +88,4 @@ export async function getBenchmarkPrices(firstDate: string): Promise<Map<Benchma
   );
 
   return prices;
-}
+});

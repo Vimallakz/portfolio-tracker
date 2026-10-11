@@ -1,6 +1,11 @@
 import type { ReactNode } from "react";
 
-import { MarketComparisonNote, MarketStatTiles, MonthlyMarketTable } from "@/components/benchmark/market-comparison-summary";
+import {
+  MarketComparisonNote,
+  MarketPills,
+  MarketStatTiles,
+  MonthlyMarketTable,
+} from "@/components/benchmark/market-comparison-summary";
 import { Money } from "@/components/currency/money";
 import { ReportBridgeChart, ReportCurrency, ReportValueChart } from "@/components/reports/report-charts";
 import { SignedValue } from "@/components/shared/signed-value";
@@ -8,7 +13,6 @@ import { formatSnapshotDate } from "@/lib/format/date";
 import { formatPercentage } from "@/lib/format/number";
 import type { MarketPeriod } from "@/lib/portfolio/benchmark/benchmark";
 import type { PortfolioReport } from "@/lib/portfolio/reports/report";
-import { cn } from "@/lib/utils";
 
 function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
   return (
@@ -29,40 +33,6 @@ function Stat({ label, children, detail }: { label: string; children: ReactNode;
       <dd className="text-lg font-semibold tracking-tight tabular-nums">{children}</dd>
       {detail ? <dd className="text-muted-foreground text-xs">{detail}</dd> : null}
     </div>
-  );
-}
-
-/** "vs S&P 500  −3.02%" pills: your return minus each index's over the period. */
-function VersusPills({ period }: { period: MarketPeriod }) {
-  if (period.yourReturn === null || period.indexes.length === 0) {
-    return null;
-  }
-
-  return (
-    <ul className="flex flex-wrap gap-2" aria-label="Against the market">
-      {period.indexes.map((move) => {
-        const gap = period.yourReturn! - move.change;
-        const better = gap >= 0;
-
-        return (
-          <li
-            key={move.symbol}
-            className={cn(
-              "rounded-full border px-3 py-1 text-xs font-medium tabular-nums",
-              better ? "border-positive/30 bg-positive/10 text-positive" : "border-negative/30 bg-negative/10 text-negative",
-            )}
-          >
-            {better ? "Beat" : "Behind"} the {move.label} by {Math.abs(gap).toFixed(2)}%
-            {move.gain !== null ? (
-              <>
-                {" "}
-                (<Money value={period.yourGain - move.gain} change />)
-              </>
-            ) : null}
-          </li>
-        );
-      })}
-    </ul>
   );
 }
 
@@ -121,7 +91,7 @@ export function ReportDocument({
               </span>
             </p>
           </div>
-          {market ? <VersusPills period={market.period} /> : null}
+          {market ? <MarketPills period={market.period} /> : null}
         </div>
 
         {report.isPartial ? (

@@ -16,7 +16,7 @@ import {
 } from "recharts";
 
 import { useMoneyFormat } from "@/components/currency/currency-provider";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardShell } from "@/components/shared/card-shell";
 import { formatSnapshotDate } from "@/lib/format/date";
 import { formatPercentage, signednessOf } from "@/lib/format/number";
 import type { HistoryPoint } from "@/lib/portfolio/analytics/dashboard";
@@ -138,7 +138,7 @@ function MonthTooltip({
   );
 }
 
-export function MonthlyPerformanceCard({ history }: { history: HistoryPoint[] }) {
+export function MonthlyPerformanceCard({ history, embedded = false }: { history: HistoryPoint[]; embedded?: boolean }) {
   const { moneyChange } = useMoneyFormat();
   const [selectedRange, setRange] = useState<PerformanceRange>("YTD");
 
@@ -154,14 +154,11 @@ export function MonthlyPerformanceCard({ history }: { history: HistoryPoint[] })
   const totalSign = signednessOf(totalGain);
 
   return (
-    <Card>
-      <CardHeader className="gap-3 sm:grid-cols-[1fr_auto]">
-        <div className="grid gap-1">
-          <CardTitle>Monthly performance</CardTitle>
-          <CardDescription>
-            Market gain each month, excluding money you added or withdrew. Measured between month-end snapshots.
-          </CardDescription>
-        </div>
+    <CardShell
+      title="Monthly performance"
+      description="Market gain each month, excluding money you added or withdrew. Measured between month-end snapshots."
+      embedded={embedded}
+      actions={
         <div className="flex flex-wrap gap-1.5 sm:justify-end" role="group" aria-label="Range">
           {ranges.map((option) => (
             <button
@@ -180,72 +177,71 @@ export function MonthlyPerformanceCard({ history }: { history: HistoryPoint[] })
             </button>
           ))}
         </div>
-      </CardHeader>
-      <CardContent className="grid gap-3">
-        <p className="text-sm">
-          {measured.length === 0 ? (
-            <span className="text-muted-foreground">
-              No month-to-month change in this range yet. Upload snapshots in more months to fill the chart.
-            </span>
-          ) : (
-            <>
-              <span className="text-muted-foreground">Gain in range </span>
-              <span className={cn("font-semibold tabular-nums", SIGN_TEXT[totalSign])}>{moneyChange(totalGain)}</span>
-            </>
-          )}
-        </p>
+      }
+    >
+      <p className="text-sm">
+        {measured.length === 0 ? (
+          <span className="text-muted-foreground">
+            No month-to-month change in this range yet. Upload snapshots in more months to fill the chart.
+          </span>
+        ) : (
+          <>
+            <span className="text-muted-foreground">Gain in range </span>
+            <span className={cn("font-semibold tabular-nums", SIGN_TEXT[totalSign])}>{moneyChange(totalGain)}</span>
+          </>
+        )}
+      </p>
 
-        <div className="h-72 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={months} margin={{ top: 8, right: 8, bottom: 8, left: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-              <XAxis
-                dataKey="month"
-                interval={0}
-                height={40}
-                tickLine={false}
-                axisLine={false}
-                tick={<MonthTick months={months} />}
+      <div className="h-72 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={months} margin={{ top: 8, right: 8, bottom: 8, left: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+            <XAxis
+              dataKey="month"
+              interval={0}
+              height={40}
+              tickLine={false}
+              axisLine={false}
+              tick={<MonthTick months={months} />}
+            />
+            <YAxis
+              domain={[-extent, extent]}
+              ticks={[-extent, -extent / 2, 0, extent / 2, extent]}
+              tickFormatter={(value: number) => `${Number(value.toFixed(2))}%`}
+              tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+              tickLine={false}
+              axisLine={false}
+              width={44}
+            />
+            {months.map((entry) => (
+              <ReferenceArea
+                key={entry.month}
+                x1={entry.month}
+                x2={entry.month}
+                y1={-extent}
+                y2={extent}
+                ifOverflow="hidden"
+                shape={MonthColumn}
               />
-              <YAxis
-                domain={[-extent, extent]}
-                ticks={[-extent, -extent / 2, 0, extent / 2, extent]}
-                tickFormatter={(value: number) => `${Number(value.toFixed(2))}%`}
-                tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                tickLine={false}
-                axisLine={false}
-                width={44}
-              />
+            ))}
+            <ReferenceLine y={0} stroke="var(--muted-foreground)" strokeOpacity={0.5} />
+            <Tooltip
+              cursor={{ fill: "var(--accent)", opacity: 0.5 }}
+              content={<MonthTooltip moneyChange={moneyChange} />}
+            />
+            <Bar
+              dataKey="returnPercentage"
+              radius={4}
+              maxBarSize={MAX_BAR_SIZE}
+              isAnimationActive={false}
+            >
               {months.map((entry) => (
-                <ReferenceArea
-                  key={entry.month}
-                  x1={entry.month}
-                  x2={entry.month}
-                  y1={-extent}
-                  y2={extent}
-                  ifOverflow="hidden"
-                  shape={MonthColumn}
-                />
+                <Cell key={entry.month} fill={SIGN_COLOR[signednessOf(entry.returnPercentage)]} />
               ))}
-              <ReferenceLine y={0} stroke="var(--muted-foreground)" strokeOpacity={0.5} />
-              <Tooltip
-                cursor={{ fill: "var(--accent)", opacity: 0.5 }}
-                content={<MonthTooltip moneyChange={moneyChange} />}
-              />
-              <Bar
-                dataKey="returnPercentage"
-                radius={4}
-                maxBarSize={MAX_BAR_SIZE}
-                isAnimationActive={false}
-              >
-                {months.map((entry) => (
-                  <Cell key={entry.month} fill={SIGN_COLOR[signednessOf(entry.returnPercentage)]} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </CardContent>
-    </Card>
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </CardShell>
   );
 }

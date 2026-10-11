@@ -15,8 +15,8 @@ import {
 } from "recharts";
 
 import { useCurrency } from "@/components/currency/currency-provider";
+import { CardShell } from "@/components/shared/card-shell";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { convertFromUsd, type DisplayCurrency } from "@/lib/currency/currency";
 import { formatCompactMoney, formatMoney } from "@/lib/format/number";
 import { useStoredChoice } from "@/lib/hooks/use-stored-choice";
@@ -86,12 +86,15 @@ type PortfolioValueChartProps = {
   history: HistoryPoint[];
   title?: string;
   description?: string;
+  /** Rendered inside another card, such as a dashboard tab. */
+  embedded?: boolean;
 };
 
 export function PortfolioValueChart({
   history,
   title = "Portfolio history",
   description = "One point per uploaded snapshot. Values between snapshots are not tracked.",
+  embedded = false,
 }: PortfolioValueChartProps) {
   const { currency, rate } = useCurrency();
   const data = useMemo(
@@ -120,12 +123,11 @@ export function PortfolioValueChart({
   }
 
   return (
-    <Card>
-      <CardHeader className="gap-3 sm:grid-cols-[1fr_auto]">
-        <div className="grid gap-1">
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>{description}</CardDescription>
-        </div>
+    <CardShell
+      title={title}
+      description={description}
+      embedded={embedded}
+      actions={
         <div className="bg-muted flex w-fit gap-0.5 rounded-lg p-0.5" role="group" aria-label="Chart type">
           {CHART_TYPE_OPTIONS.map((option) => (
             <button
@@ -146,112 +148,111 @@ export function PortfolioValueChart({
             </button>
           ))}
         </div>
-      </CardHeader>
-      <CardContent className="grid gap-4">
-        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Chart series">
-          {SERIES.map((series) => (
-            <Button
-              key={series.key}
-              type="button"
-              size="xs"
-              variant={visible[series.key] ? "secondary" : "outline"}
-              aria-pressed={visible[series.key]}
-              onClick={() => toggle(series.key)}
-            >
-              <span
-                aria-hidden="true"
-                className="size-2 rounded-full"
-                style={{ backgroundColor: visible[series.key] ? series.color : "transparent", border: `1px solid ${series.color}` }}
-              />
-              {series.label}
-            </Button>
-          ))}
-        </div>
+      }
+    >
+      <div className="flex flex-wrap gap-1.5" role="group" aria-label="Chart series">
+        {SERIES.map((series) => (
+          <Button
+            key={series.key}
+            type="button"
+            size="xs"
+            variant={visible[series.key] ? "secondary" : "outline"}
+            aria-pressed={visible[series.key]}
+            onClick={() => toggle(series.key)}
+          >
+            <span
+              aria-hidden="true"
+              className="size-2 rounded-full"
+              style={{ backgroundColor: visible[series.key] ? series.color : "transparent", border: `1px solid ${series.color}` }}
+            />
+            {series.label}
+          </Button>
+        ))}
+      </div>
 
-        {history.length < 2 ? (
-          <p className="text-muted-foreground text-xs">
-            The chart fills in as you upload more snapshots. With one snapshot it shows a single point.
-          </p>
-        ) : null}
+      {history.length < 2 ? (
+        <p className="text-muted-foreground text-xs">
+          The chart fills in as you upload more snapshots. With one snapshot it shows a single point.
+        </p>
+      ) : null}
 
-        <div className="h-64 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-              <XAxis
-                dataKey="snapshotDate"
-                tickFormatter={(value: string) => axisDate.format(toDate(value))}
-                tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                tickLine={false}
-                axisLine={false}
-                minTickGap={24}
-              />
-              <YAxis
-                domain={chartType === "line" ? ["auto", "auto"] : [(dataMin: number) => Math.min(0, dataMin), "auto"]}
-                tickFormatter={(value: number) => formatCompactMoney(value, currency)}
-                tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                tickLine={false}
-                axisLine={false}
-                width={56}
-              />
-              <Tooltip
-                content={<ChartTooltip currency={currency} />}
-                cursor={chartType === "bar" ? { fill: "var(--accent)", opacity: 0.5 } : undefined}
-              />
-              {SERIES.filter((series) => visible[series.key]).map((series) => {
-                if (chartType === "bar") {
-                  return (
-                    <Bar
-                      key={series.key}
-                      dataKey={series.key}
-                      name={series.label}
-                      fill={series.color}
-                      fillOpacity={series.dashed ? 0.55 : 0.9}
-                      radius={[4, 4, 0, 0]}
-                      maxBarSize={28}
-                      isAnimationActive={false}
-                    />
-                  );
-                }
-
-                if (chartType === "area") {
-                  return (
-                    <Area
-                      key={series.key}
-                      dataKey={series.key}
-                      name={series.label}
-                      type="monotone"
-                      stroke={series.color}
-                      fill={series.color}
-                      fillOpacity={0.12}
-                      strokeWidth={2}
-                      strokeDasharray={series.dashed ? "4 4" : undefined}
-                      dot={false}
-                      activeDot={{ r: 4 }}
-                      isAnimationActive={false}
-                    />
-                  );
-                }
-
+      <div className="h-64 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+            <XAxis
+              dataKey="snapshotDate"
+              tickFormatter={(value: string) => axisDate.format(toDate(value))}
+              tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+              tickLine={false}
+              axisLine={false}
+              minTickGap={24}
+            />
+            <YAxis
+              domain={chartType === "line" ? ["auto", "auto"] : [(dataMin: number) => Math.min(0, dataMin), "auto"]}
+              tickFormatter={(value: number) => formatCompactMoney(value, currency)}
+              tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+              tickLine={false}
+              axisLine={false}
+              width={56}
+            />
+            <Tooltip
+              content={<ChartTooltip currency={currency} />}
+              cursor={chartType === "bar" ? { fill: "var(--accent)", opacity: 0.5 } : undefined}
+            />
+            {SERIES.filter((series) => visible[series.key]).map((series) => {
+              if (chartType === "bar") {
                 return (
-                  <Line
+                  <Bar
+                    key={series.key}
+                    dataKey={series.key}
+                    name={series.label}
+                    fill={series.color}
+                    fillOpacity={series.dashed ? 0.55 : 0.9}
+                    radius={[4, 4, 0, 0]}
+                    maxBarSize={28}
+                    isAnimationActive={false}
+                  />
+                );
+              }
+
+              if (chartType === "area") {
+                return (
+                  <Area
                     key={series.key}
                     dataKey={series.key}
                     name={series.label}
                     type="monotone"
                     stroke={series.color}
+                    fill={series.color}
+                    fillOpacity={0.12}
                     strokeWidth={2}
                     strokeDasharray={series.dashed ? "4 4" : undefined}
-                    dot={{ r: 3, fill: series.color }}
+                    dot={false}
                     activeDot={{ r: 4 }}
                     isAnimationActive={false}
                   />
                 );
-              })}
-            </ComposedChart>
-          </ResponsiveContainer>
-        </div>
-      </CardContent>
-    </Card>
+              }
+
+              return (
+                <Line
+                  key={series.key}
+                  dataKey={series.key}
+                  name={series.label}
+                  type="monotone"
+                  stroke={series.color}
+                  strokeWidth={2}
+                  strokeDasharray={series.dashed ? "4 4" : undefined}
+                  dot={{ r: 3, fill: series.color }}
+                  activeDot={{ r: 4 }}
+                  isAnimationActive={false}
+                />
+              );
+            })}
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+    </CardShell>
   );
 }

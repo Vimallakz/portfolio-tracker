@@ -14,14 +14,14 @@ export async function NeedsAttentionCard({ profileId }: { profileId: string }) {
   const withTargets = entries.some((entry) => entry.myTarget !== null || entry.analystTarget !== null);
 
   return (
-    <Card size="sm">
+    <Card size="sm" className="h-full">
       <CardHeader>
         <CardTitle>Needs attention</CardTitle>
         <CardDescription>
           {top.length > 0 ? "The most important signals across your holdings." : "Nothing stands out right now."}
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-3">
+      <CardContent className="grid flex-1 content-between gap-3">
         {top.length > 0 ? (
           <ul className="grid gap-2.5">
             {top.map(({ entry, signal }) => (
@@ -53,7 +53,7 @@ export async function NeedsAttentionCard({ profileId }: { profileId: string }) {
 
 export function NeedsAttentionSkeleton() {
   return (
-    <Card size="sm" aria-busy="true">
+    <Card size="sm" className="h-full" aria-busy="true">
       <CardHeader>
         <Skeleton className="h-5 w-32" />
         <Skeleton className="h-4 w-48" />

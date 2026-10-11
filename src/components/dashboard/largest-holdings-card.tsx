@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import { Money } from "@/components/currency/money";
 import { SecurityLabel } from "@/components/dashboard/security-label";
 import { SignedValue } from "@/components/shared/signed-value";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardShell } from "@/components/shared/card-shell";
 import {
   Table,
   TableBody,
@@ -40,7 +40,7 @@ function sortHoldings(holdings: HoldingPerformance[], { key, direction }: Sort):
   );
 }
 
-export function LargestHoldingsCard({ holdings }: { holdings: HoldingPerformance[] }) {
+export function LargestHoldingsCard({ holdings, embedded = false }: { holdings: HoldingPerformance[]; embedded?: boolean }) {
   const [sort, setSort] = useState<Sort>({ key: "weight", direction: "desc" });
   const sorted = useMemo(() => sortHoldings(holdings, sort), [holdings, sort]);
 
@@ -53,11 +53,12 @@ export function LargestHoldingsCard({ holdings }: { holdings: HoldingPerformance
   }
 
   return (
-    <Card className="pb-0">
-      <CardHeader>
-        <CardTitle>Largest holdings</CardTitle>
-        <CardDescription>Top {holdings.length} by weight in the latest snapshot.</CardDescription>
-      </CardHeader>
+    <CardShell
+      title="Largest holdings"
+      description={`Top ${holdings.length} by weight in the latest snapshot.`}
+      embedded={embedded}
+      flush
+    >
       <Table>
         <TableHeader>
           <TableRow>
@@ -114,6 +115,6 @@ export function LargestHoldingsCard({ holdings }: { holdings: HoldingPerformance
           ))}
         </TableBody>
       </Table>
-    </Card>
+    </CardShell>
   );
 }

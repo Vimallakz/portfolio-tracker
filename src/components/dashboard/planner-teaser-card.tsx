@@ -12,12 +12,12 @@ export function PlannerTeaserCard({ planner }: { planner: PlannerData }) {
   const earnings = planner.earnings.sixMonths ?? planner.earnings.allTime;
 
   return (
-    <Card size="sm">
+    <Card size="sm" className="h-full">
       <CardHeader>
         <CardTitle>Investment plan</CardTitle>
         <CardDescription>Recent monthly averages for the whole portfolio.</CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-3">
+      <CardContent className="grid flex-1 content-between gap-3">
         <dl className="grid grid-cols-2 gap-3 text-sm">
           <div>
             <dt className="text-muted-foreground text-xs">Avg invested</dt>
