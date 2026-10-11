@@ -16,6 +16,7 @@ import { formatSnapshotDate } from "@/lib/format/date";
 import { formatPercentage } from "@/lib/format/number";
 import { buildHistory } from "@/lib/portfolio/analytics/dashboard";
 import { addMonths } from "@/lib/portfolio/analytics/monthly-performance";
+import { calculateMoneyWeightedReturn } from "@/lib/portfolio/analytics/xirr";
 import { sinceStartReturn, type YourPeriodReturn } from "@/lib/portfolio/benchmark/benchmark";
 import type { EarningsSummary } from "@/lib/portfolio/planner/earnings";
 import { annualizeMonthlyReturn } from "@/lib/portfolio/planner/earnings";
@@ -162,6 +163,7 @@ export default async function PlannerPage() {
           returnSource={returnSource}
           investedAmount={latest.investedAmount}
           sinceStart={sinceStart}
+          yearly={calculateMoneyWeightedReturn(history)}
           history={history}
         />
 

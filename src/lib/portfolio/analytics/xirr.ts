@@ -25,14 +25,6 @@ const DAYS_PER_YEAR = 365;
 const daysBetween = (from: string, to: string) =>
   (Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / DAY_MS;
 
-/** The day halfway between two "YYYY-MM-DD" dates, rounded down. */
-export function midpointDate(from: string, to: string): string {
-  const start = Date.parse(`${from}T00:00:00Z`);
-  const days = Math.floor(daysBetween(from, to) / 2);
-
-  return new Date(start + days * DAY_MS).toISOString().slice(0, 10);
-}
-
 function netPresentValue(rate: number, flows: CashFlow[], start: string): number {
   return flows.reduce(
     (total, flow) => total + flow.amount / (1 + rate) ** (daysBetween(start, flow.date) / DAYS_PER_YEAR),
@@ -88,12 +80,12 @@ export function xirr(flows: CashFlow[]): number | null {
 }
 
 /**
- * Cash flows for the money-weighted return from the first point to the last.
- * The first point's value is treated as invested on its date, so returns earned
- * before it are not counted. Each later change in invested amount is the money
- * added (or withdrawn) midway between that snapshot and the previous one, since
- * snapshots do not say which day it really moved. This matches the Modified
- * Dietz returns elsewhere. The last value comes back at the end.
+ * Cash flows for the money-weighted return from the first point to the last,
+ * on the same rules as the monthly returns and the market comparison: the
+ * first snapshot's invested amount goes in on the 1st of its month, so that
+ * month's gain counts; each later change in invested amount goes in at the
+ * previous snapshot, so it counts in full for the period; the last value comes
+ * back at the end.
  */
 export function buildCashFlows(points: HistoryPoint[]): CashFlow[] {
   const first = points[0];
@@ -103,13 +95,13 @@ export function buildCashFlows(points: HistoryPoint[]): CashFlow[] {
     return [];
   }
 
-  const flows: CashFlow[] = [{ date: first.snapshotDate, amount: -first.currentValue }];
+  const flows: CashFlow[] = [{ date: `${first.snapshotDate.slice(0, 7)}-01`, amount: -first.investedAmount }];
 
   for (let index = 1; index < points.length; index++) {
     const added = points[index].investedAmount - points[index - 1].investedAmount;
 
     if (added !== 0) {
-      flows.push({ date: midpointDate(points[index - 1].snapshotDate, points[index].snapshotDate), amount: -added });
+      flows.push({ date: points[index - 1].snapshotDate, amount: -added });
     }
   }
 

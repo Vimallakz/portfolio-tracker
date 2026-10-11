@@ -6,10 +6,12 @@ import { Money } from "@/components/currency/money";
 import { HeroCard } from "@/components/shared/hero-card";
 import { SignedValue } from "@/components/shared/signed-value";
 import { Stat, StatStrip } from "@/components/shared/stat-strip";
+import { yearlyReturnNote } from "@/components/shared/yearly-return";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPercentage } from "@/lib/format/number";
 import type { HistoryPoint } from "@/lib/portfolio/analytics/dashboard";
 import { addMonths } from "@/lib/portfolio/analytics/monthly-performance";
+import type { MoneyWeightedReturn } from "@/lib/portfolio/analytics/xirr";
 import type { YourPeriodReturn } from "@/lib/portfolio/benchmark/benchmark";
 import { annualizeMonthlyReturn } from "@/lib/portfolio/planner/earnings";
 import type { Projection } from "@/lib/portfolio/planner/projection";
@@ -24,6 +26,7 @@ export function PlannerHero({
   returnSource,
   investedAmount,
   sinceStart,
+  yearly,
   history,
 }: {
   years: number;
@@ -35,6 +38,8 @@ export function PlannerHero({
   returnSource: string;
   investedAmount: number;
   sinceStart: YourPeriodReturn | null;
+  /** XIRR since the first snapshot. */
+  yearly: MoneyWeightedReturn | null;
   history: HistoryPoint[];
 }) {
   const startMonth = sinceStart ? addMonths(sinceStart.fromMonth, 1) : null;
@@ -76,15 +81,23 @@ export function PlannerHero({
         >
           <SignedValue value={monthlyReturn}>{formatPercentage(monthlyReturn)}</SignedValue>
         </Stat>
-        <Stat label="Invested so far" detail="Cost basis of current holdings">
-          <Money value={investedAmount} />
+        <Stat
+          label="Yearly return"
+          detail={yearly ? yearlyReturnNote(yearly) : "Needs a snapshot"}
+        >
+          {yearly ? (
+            <SignedValue value={yearly.annualReturn}>{formatPercentage(yearly.annualReturn)}</SignedValue>
+          ) : (
+            "—"
+          )}
         </Stat>
         <Stat
           label="Return since start"
           detail={
             sinceStart && startMonth ? (
               <SignedValue value={sinceStart.yourGain}>
-                <Money value={sinceStart.yourGain} change /> since {formatMonthLabel(startMonth)}
+                <Money value={sinceStart.yourGain} change /> on <Money value={investedAmount} /> since{" "}
+                {formatMonthLabel(startMonth)}
               </SignedValue>
             ) : undefined
           }

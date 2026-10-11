@@ -6,6 +6,7 @@ import { ReportDocument } from "@/components/reports/report-document";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { buildHistory } from "@/lib/portfolio/analytics/dashboard";
+import { calculateMoneyWeightedReturn } from "@/lib/portfolio/analytics/xirr";
 import { addMonths } from "@/lib/portfolio/analytics/monthly-performance";
 import { compareMonths, comparePeriod } from "@/lib/portfolio/benchmark/benchmark";
 import { getBenchmarkPrices } from "@/lib/portfolio/benchmark/prices";
@@ -100,6 +101,7 @@ export default async function ReportsPage({
           <ReportDocument
             report={report}
             market={market}
+            yearly={calculateMoneyWeightedReturn(history.filter((point) => point.snapshotDate <= report.endDate))}
             profileName={activeProfile.name}
             generatedOn={todayInTimeZone(new Date())}
           />

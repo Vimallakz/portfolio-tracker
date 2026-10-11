@@ -6,10 +6,12 @@ import { Money } from "@/components/currency/money";
 import { HeroCard } from "@/components/shared/hero-card";
 import { SignedValue } from "@/components/shared/signed-value";
 import { Stat, StatStrip } from "@/components/shared/stat-strip";
+import { YearlyReturn } from "@/components/shared/yearly-return";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPercentage } from "@/lib/format/number";
 import type { AllocationSlice, HistoryPoint, PortfolioSummary } from "@/lib/portfolio/analytics/dashboard";
 import { buildMonthlyPerformance } from "@/lib/portfolio/analytics/monthly-performance";
+import { calculateMoneyWeightedReturn } from "@/lib/portfolio/analytics/xirr";
 
 const ALLOCATION_LABEL = { STOCK: "Stocks", ETF: "ETFs" } as const;
 const ALLOCATION_COLOR = { STOCK: "bg-primary", ETF: "bg-chart-2" } as const;
@@ -57,6 +59,7 @@ export function PortfolioHero({
     .filter((entry) => entry.gain !== null)
     .at(-1);
   const firstMonth = history[0]?.snapshotDate.slice(0, 7);
+  const yearly = calculateMoneyWeightedReturn(history);
 
   return (
     <HeroCard label="Portfolio summary">
@@ -73,6 +76,7 @@ export function PortfolioHero({
             total return on <Money value={summary.investedAmount} /> invested
           </span>
         </p>
+        {yearly ? <YearlyReturn result={yearly} className="text-sm" /> : null}
         <div className="grid gap-1.5">
           {firstMonth ? (
             <p className="text-muted-foreground text-xs">Against the market since {formatMonthLabel(firstMonth)}</p>

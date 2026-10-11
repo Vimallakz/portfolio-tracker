@@ -9,8 +9,10 @@ import {
 import { Money } from "@/components/currency/money";
 import { ReportBridgeChart, ReportCurrency, ReportValueChart } from "@/components/reports/report-charts";
 import { SignedValue } from "@/components/shared/signed-value";
+import { YearlyReturn } from "@/components/shared/yearly-return";
 import { formatSnapshotDate } from "@/lib/format/date";
 import { formatPercentage } from "@/lib/format/number";
+import type { MoneyWeightedReturn } from "@/lib/portfolio/analytics/xirr";
 import type { MarketPeriod } from "@/lib/portfolio/benchmark/benchmark";
 import type { PortfolioReport } from "@/lib/portfolio/reports/report";
 
@@ -39,12 +41,15 @@ function Stat({ label, children, detail }: { label: string; children: ReactNode;
 export function ReportDocument({
   report,
   market,
+  yearly,
   profileName,
   generatedOn,
 }: {
   report: PortfolioReport;
   /** Null when there is no report for the period. */
   market: { period: MarketPeriod; months: MarketPeriod[] } | null;
+  /** XIRR from the first snapshot to the report's end. */
+  yearly: MoneyWeightedReturn | null;
   profileName: string;
   /** "YYYY-MM-DD". */
   generatedOn: string;
@@ -145,6 +150,7 @@ export function ReportDocument({
                 </SignedValue>{" "}
                 on <Money value={report.endInvested} />
               </span>
+              {yearly ? <YearlyReturn result={yearly} className="block text-right text-xs" /> : null}
             </span>
           </div>
         </Section>

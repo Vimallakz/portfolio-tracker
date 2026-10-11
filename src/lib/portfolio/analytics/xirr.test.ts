@@ -44,22 +44,15 @@ describe("xirr", () => {
 });
 
 describe("buildCashFlows", () => {
-  it("starts from the first value and adds each change in invested amount midway between snapshots", () => {
+  it("invests the first amount at the start of its month and each later change at the previous snapshot", () => {
     expect(
       buildCashFlows([point("2025-01-31", 900, 1000), point("2025-02-28", 1400, 1550), point("2025-03-31", 1300, 1500)]),
     ).toEqual([
-      { date: "2025-01-31", amount: -1000 },
-      { date: "2025-02-14", amount: -500 },
-      { date: "2025-03-15", amount: 100 },
+      { date: "2025-01-01", amount: -900 },
+      { date: "2025-01-31", amount: -500 },
+      { date: "2025-02-28", amount: 100 },
       { date: "2025-03-31", amount: 1500 },
     ]);
-  });
-
-  it("agrees with the Modified Dietz return when money is added during the month", () => {
-    // 300 at the start, 312.72 added during the month, 12.67 lost: about 12.67 / (300 + 312.72 / 2).
-    const result = calculateMoneyWeightedReturn([point("2026-06-30", 312.72, 300.05), point("2026-07-30", 625.44, 600.09)]);
-
-    expect(result?.periodReturn).toBeCloseTo((-12.68 / (300.05 + 312.72 / 2)) * 100, 1);
   });
 });
 
@@ -80,7 +73,14 @@ describe("calculateMoneyWeightedReturn", () => {
     expect(result?.coversAYear).toBe(false);
   });
 
-  it("is null for a single snapshot", () => {
-    expect(calculateMoneyWeightedReturn([point("2025-01-01", 1000, 1100)])).toBeNull();
+  it("measures a single snapshot from the start of its month", () => {
+    const result = calculateMoneyWeightedReturn([point("2025-01-31", 1000, 1100)]);
+
+    expect(result?.periodReturn).toBeCloseTo(10, 4);
+    expect(result?.startDate).toBe("2025-01-01");
+  });
+
+  it("is null without snapshots", () => {
+    expect(calculateMoneyWeightedReturn([])).toBeNull();
   });
 });

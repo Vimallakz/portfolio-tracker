@@ -189,6 +189,17 @@ endpoint (no key) and are stored in `benchmark_prices`, refreshed at most twice
 a day. If Yahoo is unreachable, the comparison shows your own return only.
 Logic: `src/lib/portfolio/benchmark/`.
 
+### Yearly return (XIRR)
+
+The total return says how much you made, not how fast: +25% over 3 years and
+over 10 years are very different paces. XIRR turns your history into one yearly
+rate, shown on the dashboard, planner and reports. It uses the same rules as
+above: the first snapshot's invested amount goes in on the 1st of its month,
+each later change in invested amount goes in at the previous snapshot, and the
+latest value comes back at the end. Under a year of history it is labelled an
+early estimate, because annualizing a few months magnifies them.
+Logic: `src/lib/portfolio/analytics/xirr.ts`.
+
 ## Continuous integration
 
 `.github/workflows/ci.yml` runs on every push to `master` and every pull
