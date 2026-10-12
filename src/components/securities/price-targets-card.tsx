@@ -6,6 +6,7 @@ import { RefreshAnalystButton } from "@/components/securities/refresh-analyst-bu
 import { SignedValue } from "@/components/shared/signed-value";
 import { NotAdviceNote, SignalList } from "@/components/signals/signal-list";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatRelativeTime, formatSnapshotDate } from "@/lib/format/date";
 import { formatPercentage } from "@/lib/format/number";
 import type { AnalystRatings } from "@/lib/market-data/finnhub";
@@ -112,17 +113,28 @@ export function PriceTargetsCard({ securityId, hasTicker, entry, ratings, rating
   );
 }
 
-type Marker = { label: string; price: number; className: string };
+/** A tick sits on top of the dots, so a stop at the same price as a target stays visible. */
+type Marker = { label: string; price: number; className: string; shape: "dot" | "price" | "tick" };
+
+const MARKER_SHAPE: Record<Marker["shape"], { track: string; legend: string }> = {
+  dot: { track: "size-3 rounded-full ring-2 ring-background", legend: "size-2 rounded-full" },
+  price: { track: "z-20 size-4 rounded-full ring-2 ring-background", legend: "size-2.5 rounded-full" },
+  tick: { track: "z-10 h-5 w-1 rounded-full ring-1 ring-background", legend: "h-3 w-1 rounded-full" },
+};
+
+const OVERLAP_PERCENT = 1.5;
 
 /** Stop, buy zone, price and both targets on one scale. */
 function PriceLadder({ entry, analystTarget }: { entry: SecuritySignals; analystTarget: number | null }) {
-  const markers: Marker[] = [
-    { label: "Stop", price: entry.stopPrice ?? Number.NaN, className: "bg-negative" },
-    { label: "Price", price: entry.price, className: "bg-foreground" },
-    { label: "My target", price: entry.myTarget ?? Number.NaN, className: "bg-chart-1" },
-    { label: "Analysts", price: analystTarget ?? Number.NaN, className: "bg-chart-2" },
-    { label: "Avg cost", price: entry.averageBuyPrice ?? Number.NaN, className: "bg-muted-foreground" },
-  ].filter((marker) => Number.isFinite(marker.price));
+  const markers: Marker[] = (
+    [
+      { label: "Avg cost", price: entry.averageBuyPrice ?? Number.NaN, className: "bg-chart-4", shape: "dot" },
+      { label: "My target", price: entry.myTarget ?? Number.NaN, className: "bg-chart-1", shape: "dot" },
+      { label: "Analysts", price: analystTarget ?? Number.NaN, className: "bg-chart-2", shape: "dot" },
+      { label: "Price", price: entry.price, className: "bg-foreground", shape: "price" },
+      { label: "Stop", price: entry.stopPrice ?? Number.NaN, className: "bg-negative", shape: "tick" },
+    ] satisfies Marker[]
+  ).filter((marker) => Number.isFinite(marker.price));
 
   const zone = [entry.accumulationMin, entry.accumulationMax];
   const values = [...markers.map((m) => m.price), ...zone.filter((v): v is number => v !== null)];
@@ -138,27 +150,50 @@ function PriceLadder({ entry, analystTarget }: { entry: SecuritySignals; analyst
   const zoneEnd = position(entry.accumulationMax ?? high);
   const hasZone = entry.accumulationMin !== null || entry.accumulationMax !== null;
 
+  /** Markers this close on the track hide each other, so their tooltips list them all. */
+  const nearby = (marker: Marker) =>
+    markers
+      .filter((other) => Math.abs(position(other.price) - position(marker.price)) < OVERLAP_PERCENT)
+      .sort((a, b) => a.price - b.price);
+
   return (
     <div className="grid gap-2">
-      <div className="relative h-2 rounded-full bg-muted" role="img" aria-label="Price compared with your levels">
+      <div className="relative h-2 rounded-full bg-muted" role="group" aria-label="Price compared with your levels">
         {hasZone ? (
-          <div
-            className="bg-positive/30 absolute inset-y-0 rounded-full"
-            style={{ left: `${zoneStart}%`, width: `${Math.max(zoneEnd - zoneStart, 1)}%` }}
-            title="Your buy zone"
-          />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div
+                className="bg-positive/30 absolute inset-y-0 rounded-full"
+                style={{ left: `${zoneStart}%`, width: `${Math.max(zoneEnd - zoneStart, 1)}%` }}
+              />
+            </TooltipTrigger>
+            <TooltipContent>
+              Buy zone <Money value={entry.accumulationMin} /> – <Money value={entry.accumulationMax} />
+            </TooltipContent>
+          </Tooltip>
         ) : null}
         {markers.map((marker) => (
-          <span
-            key={marker.label}
-            className={cn(
-              "ring-background absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2",
-              marker.className,
-              marker.label === "Price" && "size-4",
-            )}
-            style={{ left: `${position(marker.price)}%` }}
-            title={marker.label}
-          />
+          <Tooltip key={marker.label}>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label={marker.label}
+                className={cn(
+                  "focus-visible:ring-ring absolute top-1/2 -translate-x-1/2 -translate-y-1/2 cursor-default outline-none focus-visible:ring-2",
+                  MARKER_SHAPE[marker.shape].track,
+                  marker.className,
+                )}
+                style={{ left: `${position(marker.price)}%` }}
+              />
+            </TooltipTrigger>
+            <TooltipContent>
+              <div className="grid gap-1">
+                {nearby(marker).map((item) => (
+                  <MarkerTooltipRow key={item.label} marker={item} price={entry.price} priceSource={entry.priceSource} />
+                ))}
+              </div>
+            </TooltipContent>
+          </Tooltip>
         ))}
       </div>
       <ul className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 text-xs">
@@ -166,7 +201,7 @@ function PriceLadder({ entry, analystTarget }: { entry: SecuritySignals; analyst
           .sort((a, b) => a.price - b.price)
           .map((marker) => (
             <li key={marker.label} className="flex items-center gap-1.5">
-              <span className={cn("size-2 rounded-full", marker.className)} aria-hidden="true" />
+              <span className={cn(MARKER_SHAPE[marker.shape].legend, marker.className)} aria-hidden="true" />
               {marker.label} <Money value={marker.price} />
             </li>
           ))}
@@ -178,6 +213,30 @@ function PriceLadder({ entry, analystTarget }: { entry: SecuritySignals; analyst
         ) : null}
       </ul>
     </div>
+  );
+}
+
+function MarkerTooltipRow({
+  marker,
+  price,
+  priceSource,
+}: {
+  marker: Marker;
+  price: number;
+  priceSource: SecuritySignals["priceSource"];
+}) {
+  const isPrice = marker.shape === "price";
+  const fromPrice = (marker.price / price - 1) * 100;
+
+  return (
+    <span className="flex items-center gap-1.5 tabular-nums">
+      <span className={cn(MARKER_SHAPE[marker.shape].legend, marker.className, "ring-background/60 ring-1")} aria-hidden="true" />
+      <span>{isPrice ? (priceSource === "live" ? "Live price" : "Snapshot price") : marker.label}</span>
+      <span className="font-semibold">
+        <Money value={marker.price} />
+      </span>
+      {isPrice ? null : <span className="opacity-70">{formatPercentage(fromPrice, 1)} from price</span>}
+    </span>
   );
 }
 
