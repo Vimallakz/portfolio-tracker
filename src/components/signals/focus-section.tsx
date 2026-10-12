@@ -5,6 +5,7 @@ import { SignedValue } from "@/components/shared/signed-value";
 import { SignalList } from "@/components/signals/signal-list";
 import { AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
+import { formatSnapshotDate } from "@/lib/format/date";
 import { formatPercentage } from "@/lib/format/number";
 import type { SecuritySignals, SignalGroup } from "@/lib/portfolio/signals/signals";
 
@@ -47,6 +48,9 @@ export function FocusSection({ title, description, group, entries, emptyMessage 
   );
 }
 
+const trimRatio = (value: number) => String(Number(value.toFixed(2)));
+const splitLabel = (ratio: number) => (ratio >= 1 ? `${trimRatio(ratio)}-for-1` : `1-for-${trimRatio(1 / ratio)}`);
+
 function FocusSecurity({ entry }: { entry: SecuritySignals }) {
   return (
     <div className="grid content-start gap-1">
@@ -63,6 +67,11 @@ function FocusSecurity({ entry }: { entry: SecuritySignals }) {
         ) : null}
         <span className="text-muted-foreground ml-1.5 text-xs">{entry.priceSource === "live" ? "live" : "snapshot"}</span>
       </p>
+      {entry.split ? (
+        <p className="text-muted-foreground text-xs">
+          Adjusted for a {splitLabel(entry.split.ratio)} split on {formatSnapshotDate(entry.split.date)}
+        </p>
+      ) : null}
       <div className="text-muted-foreground flex flex-wrap gap-x-3 text-xs tabular-nums">
         {entry.myUpside !== null ? <span>Mine {formatPercentage(entry.myUpside, 1)}</span> : null}
         {entry.analystUpside !== null ? <span>Analysts {formatPercentage(entry.analystUpside, 1)}</span> : null}

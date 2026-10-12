@@ -1,5 +1,6 @@
 import type { Conviction, InvestmentStatus } from "@/generated/prisma/enums";
 import { formatSnapshotDate } from "@/lib/format/date";
+import type { StockSplit } from "@/lib/market-data/yahoo";
 
 /** Every rule's threshold in one place, so they are easy to tune. */
 export const SIGNAL_THRESHOLDS = {
@@ -38,6 +39,8 @@ export type SignalInput = {
   investmentStatus: InvestmentStatus | null;
   /** ISO timestamp; null when there is no research note. */
   researchUpdatedAt: string | null;
+  /** A split the older prices above were already adjusted for, shown so the numbers make sense. */
+  split?: StockSplit | null;
 };
 
 export type SignalKind =
