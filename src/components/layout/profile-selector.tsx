@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { selectProfile } from "@/lib/profiles/actions";
 import type { ProfileSummary } from "@/lib/profiles/queries";
+import { clearSavedPages } from "@/lib/pwa/page-cache";
 
 type ProfileSelectorProps = {
   profiles: ProfileSummary[];
@@ -45,6 +46,7 @@ export function ProfileSelector({
     }
 
     startTransition(async () => {
+      await clearSavedPages().catch(() => {});
       const result = await selectProfile(profileId);
 
       if (!result.ok) {
@@ -62,7 +64,7 @@ export function ProfileSelector({
           disabled={isPending}
           className="gap-2"
         >
-          <span className="max-w-32 truncate">{activeProfile.name}</span>
+          <span className="max-w-24 truncate sm:max-w-32">{activeProfile.name}</span>
           <ChevronDown className="size-4 opacity-60" />
         </Button>
       </DropdownMenuTrigger>

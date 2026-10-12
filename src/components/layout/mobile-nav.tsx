@@ -1,35 +1,19 @@
 "use client";
 
-import { Menu } from "lucide-react";
-import { useState } from "react";
-
 import { AppLogo } from "@/components/layout/app-logo";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
-import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
-export function MobileNav() {
-  const [open, setOpen] = useState(false);
+type NavSheetProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
 
+/** The full navigation in a drawer, opened from the bottom bar's More tab. */
+export function NavSheet({ open, onOpenChange }: NavSheetProps) {
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="lg:hidden"
-          aria-label="Open navigation"
-        >
-          <Menu className="size-5" />
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="left" className="w-64 p-0">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="left" className="w-64 p-0 pt-[env(safe-area-inset-top)]">
         <SheetHeader className="h-14 justify-center border-b px-5">
           <SheetTitle asChild>
             <div>
@@ -37,8 +21,8 @@ export function MobileNav() {
             </div>
           </SheetTitle>
         </SheetHeader>
-        <div className="overflow-y-auto p-3">
-          <SidebarNav onNavigate={() => setOpen(false)} />
+        <div className="overflow-y-auto p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+          <SidebarNav onNavigate={() => onOpenChange(false)} />
         </div>
       </SheetContent>
     </Sheet>

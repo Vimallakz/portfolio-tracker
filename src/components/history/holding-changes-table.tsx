@@ -120,7 +120,7 @@ export function HoldingChangesTable({
           <div
             role="group"
             aria-label="Filter by change"
-            className="bg-muted flex w-fit max-w-full gap-0.5 overflow-x-auto rounded-lg p-0.5"
+            className="bg-muted scrollbar-none flex w-fit max-w-full gap-0.5 overflow-x-auto rounded-lg p-0.5"
           >
             {filters.map((option) => {
               const pressed = filter === option.id;

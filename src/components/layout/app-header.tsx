@@ -4,7 +4,6 @@ import Link from "next/link";
 import { CurrencyToggle } from "@/components/currency/currency-toggle";
 import { AccountMenu } from "@/components/layout/account-menu";
 import { AppLogo } from "@/components/layout/app-logo";
-import { MobileNav } from "@/components/layout/mobile-nav";
 import { ProfileSelector } from "@/components/layout/profile-selector";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { UploadReminder } from "@/components/layout/upload-reminder";
@@ -22,19 +21,17 @@ type AppHeaderProps = {
 
 export function AppHeader({ user, profiles, activeProfile, uploadReminder }: AppHeaderProps) {
   return (
-    <header className="bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-40 flex h-14 items-center gap-2 border-b px-4 backdrop-blur print:hidden">
-      <MobileNav />
-
+    <header className="bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-40 flex h-[calc(3.5rem+env(safe-area-inset-top))] items-center gap-2 border-b px-4 pt-[env(safe-area-inset-top)] backdrop-blur print:hidden">
       <div className="lg:hidden">
-        <AppLogo />
+        <AppLogo compact />
       </div>
 
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex min-w-0 items-center gap-1 sm:gap-2">
         {uploadReminder && <UploadReminder reminder={uploadReminder} />}
         <CurrencyToggle />
         <ProfileSelector profiles={profiles} activeProfile={activeProfile} />
         <ThemeToggle />
-        <Button variant="ghost" size="icon" asChild aria-label="Settings">
+        <Button variant="ghost" size="icon" asChild aria-label="Settings" className="hidden lg:inline-flex">
           <Link href="/settings">
             <Settings className="size-4" />
           </Link>

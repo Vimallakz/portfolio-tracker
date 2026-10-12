@@ -1,7 +1,7 @@
 import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { AppLogo } from "@/components/layout/app-logo";
 
-/** Desktop sidebar. The mobile equivalent is MobileNav's drawer. */
+/** Desktop sidebar. Below lg, BottomNav and its More drawer take over. */
 export function AppSidebar() {
   return (
     <aside className="bg-sidebar hidden w-60 shrink-0 border-r lg:flex lg:flex-col print:hidden">

@@ -62,10 +62,43 @@ model User {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  profiles Profile[]
-  sessions Session[]
+  profiles          Profile[]
+  sessions          Session[]
+  pushSubscriptions PushSubscription[]
+  notificationLogs  NotificationLog[]
 
   @@map("users")
+}
+
+/// One browser or installed app that accepted notifications. The keys come from
+/// the browser's PushSubscription and are needed to encrypt each message.
+model PushSubscription {
+  id         String    @id @default(cuid())
+  userId     String
+  endpoint   String    @unique
+  p256dh     String
+  auth       String
+  createdAt  DateTime  @default(now())
+  lastSentAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_subscriptions")
+}
+
+/// What was already sent, so the daily job sends each notification once.
+/// The key carries the day, e.g. "upload:2026-10-28:<profileId>".
+model NotificationLog {
+  id     String   @id @default(cuid())
+  userId String
+  key    String
+  sentAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key])
+  @@map("notification_logs")
 }
 
 /// A signed-in browser. The cookie holds a random token; only its SHA-256 is

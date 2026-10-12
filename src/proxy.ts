@@ -2,7 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { SESSION_COOKIE } from "@/lib/auth/session-cookie";
 
-const PUBLIC_PATHS = ["/login", "/signup"];
+/** The offline page is cached by the service worker; the cron route checks its own bearer secret. */
+const PUBLIC_PATHS = ["/login", "/signup", "/offline", "/api/cron/notify"];
 
 /**
  * Optimistic check only: it looks for the cookie, not a valid session, so pages
@@ -25,5 +26,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"],
 };

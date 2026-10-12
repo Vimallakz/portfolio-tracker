@@ -79,6 +79,9 @@ The app runs at [http://localhost:3000](http://localhost:3000) and redirects to
 | -------- | -------- | ------- |
 | `DATABASE_URL` | Yes | Connection used by the application at runtime. On a pooled host such as Neon or Supabase, use the **pooled** connection string. |
 | `DIRECT_URL` | No | Direct, unpooled connection used only for migrations. Required on Neon and Supabase, because their pooler cannot run DDL. Omit for a local Postgres. |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | No | Key pair for push notifications. Generate with `npx web-push generate-vapid-keys`. Without them the Notifications card says push is not set up. |
+| `VAPID_SUBJECT` | No | Contact for the push services, as `mailto:you@example.com`. |
+| `CRON_SECRET` | No | At least 16 characters. The daily notification job must send it as a bearer token. |
 
 Both are server-only and are validated at startup in `src/lib/env.ts`. Never commit
 `.env`; `.env.example` is the committed template.
@@ -113,6 +116,10 @@ Set these in the host's environment variables (available at build time):
 - `DIRECT_URL`: the unpooled connection used for migrations. Required on Neon,
   whose pooler cannot run migrations.
 - `FINNHUB_API_KEY`: optional, for live prices, news and analyst ratings.
+- `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` and
+  `CRON_SECRET`: optional, for push notifications (see
+  [Phone app](#phone-app-pwa)). The public key is baked into the build, so set
+  it before building.
 
 Note that a local `npm run build` also migrates the database in `.env`; use
 `npm run build:app` to build without it.
@@ -221,6 +228,58 @@ judge it with the same pace as the plan hero: your 6-month average investment
 
 The planner chart draws the goal as a dashed line with a dot at the target
 month. Logic: `src/lib/portfolio/planner/goal.ts`.
+
+## Phone app (PWA)
+
+The app installs on a phone like a native one, opens full screen from the home
+screen, and below the `lg` breakpoint swaps the sidebar for a bottom tab bar
+(Dashboard, Planner, Focus, History, and More for everything else).
+
+### Install on your phone
+
+- **Android (Chrome, Edge):** open the site and use **Install app** from the
+  Settings page card or the browser menu.
+- **iPhone and iPad (Safari):** Share, then **Add to Home Screen**. The
+  Settings page shows the same tip.
+
+The manifest is `src/app/manifest.ts`. Icons in `public/icons/` are rendered
+from `src/app/icon.svg`; after changing the logo, run
+`npx tsx scripts/generate-pwa-icons.mts`.
+
+### Offline
+
+`public/sw.js` keeps a copy of every page you open (network first, so online
+you always see fresh figures) and the static files they need. Offline, pages
+you have opened before load from that copy under a banner saying the figures
+are from your last visit; other pages show `/offline`, which lists the saved
+ones. Login, signup and `/api/` are never cached, and the saved pages are
+cleared on logout and when switching profile. Caching is off under
+`next dev` so it never fights hot reload; test it with `npm run build:app`
+and `npm start`. Bump `VERSION` in `sw.js` when its precache list changes.
+
+### Notifications
+
+Once VAPID keys are set, **Settings → Notifications → Turn on** subscribes the
+device (stored in `push_subscriptions`), and **Send a test** checks delivery.
+A daily job sends, per profile:
+
+- **Upload reminder:** when the month-end CSV is due or overdue, linking to
+  the import page with the date filled in.
+- **Take action:** when a stop is hit or a price reaches your target, listing
+  up to three holdings.
+
+Each is sent at most once a day (`notification_logs`). The job is
+`GET /api/cron/notify` with the secret as a bearer token; schedule it once a
+day with Hostinger's cron jobs or a service such as cron-job.org:
+
+```bash
+curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://your-domain/api/cron/notify
+```
+
+It answers 401 without the right secret, 503 when push is not configured, and
+otherwise `{ today, users, sent, skipped }`. On iPhone, notifications need
+iOS 16.4 or later and the app added to the Home Screen. Logic:
+`src/lib/notifications/`.
 
 ## Continuous integration
 

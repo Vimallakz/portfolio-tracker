@@ -9,6 +9,13 @@ const serverEnvSchema = z.object({
   DIRECT_URL: z.string().min(1).optional(),
   /** Live quotes, company news and analyst ratings. Without it, snapshot prices are used and the rest is hidden. */
   FINNHUB_API_KEY: z.string().min(1).optional(),
+  /** Web push. Without the key pair, notifications are hidden in Settings and the cron route sends nothing. */
+  NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string().min(1).optional(),
+  VAPID_PRIVATE_KEY: z.string().min(1).optional(),
+  /** A mailto: or https: contact the push services can reach about abuse. */
+  VAPID_SUBJECT: z.string().min(1).default("mailto:admin@example.com"),
+  /** Bearer token the daily scheduler sends to /api/cron/notify. */
+  CRON_SECRET: z.string().min(16).optional(),
   NODE_ENV: z
     .enum(["development", "test", "production"])
     .default("development"),

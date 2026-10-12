@@ -60,7 +60,7 @@ export function TabbedCard({
           role="tablist"
           aria-label={title}
           onKeyDown={onKeyDown}
-          className="bg-muted flex w-fit max-w-full gap-0.5 overflow-x-auto rounded-lg p-0.5"
+          className="bg-muted scrollbar-none flex w-fit max-w-full gap-0.5 overflow-x-auto rounded-lg p-0.5"
         >
           {tabs.map((tab, index) => {
             const selected = index === activeIndex;
@@ -79,7 +79,7 @@ export function TabbedCard({
                 tabIndex={selected ? 0 : -1}
                 onClick={() => setActiveId(tab.id)}
                 className={cn(
-                  "focus-visible:ring-ring/50 h-8 shrink-0 rounded-md px-3 text-xs font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-3",
+                  "focus-visible:ring-ring/50 h-9 shrink-0 rounded-md px-3 sm:h-8 text-xs font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-3",
                   selected ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
                 )}
               >

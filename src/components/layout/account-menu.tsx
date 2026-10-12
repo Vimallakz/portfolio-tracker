@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { logout } from "@/lib/auth/actions";
+import { clearSavedPages } from "@/lib/pwa/page-cache";
 
 export function AccountMenu({ email, name }: { email: string; name: string | null }) {
   const [isPending, startTransition] = useTransition();
@@ -37,7 +38,15 @@ export function AccountMenu({ email, name }: { email: string; name: string | nul
             Change password
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => startTransition(() => logout())} className="gap-2">
+        <DropdownMenuItem
+          onSelect={() =>
+            startTransition(async () => {
+              await clearSavedPages().catch(() => {});
+              await logout();
+            })
+          }
+          className="gap-2"
+        >
           <LogOut className="size-4" />
           Log out
         </DropdownMenuItem>

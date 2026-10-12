@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { ThemeProvider } from "@/components/layout/theme-provider";
+import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -21,6 +22,23 @@ export const metadata: Metadata = {
   title: "Portfolio Intelligence",
   description:
     "Personal portfolio intelligence tracker for analysing investment snapshots.",
+  applicationName: "Portfolio Intelligence",
+  appleWebApp: {
+    capable: true,
+    title: "Portfolio",
+    statusBarStyle: "default",
+  },
+  formatDetection: { telephone: false },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -38,7 +56,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           disableTransitionOnChange
         >
           <TooltipProvider>{children}</TooltipProvider>
-          <Toaster />
+          <ServiceWorkerRegister />
+          <Toaster
+            offset={{ bottom: "calc(24px + var(--bottom-nav-space, 0px))" }}
+            mobileOffset={{ bottom: "calc(16px + var(--bottom-nav-space, 0px))" }}
+          />
         </ThemeProvider>
       </body>
     </html>

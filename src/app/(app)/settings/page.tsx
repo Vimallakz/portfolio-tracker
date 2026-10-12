@@ -1,8 +1,12 @@
 import { ChevronRight, IndianRupee, Tags, UserRound, UsersRound } from "lucide-react";
 import Link from "next/link";
 
+import { InstallHint } from "@/components/pwa/install-hint";
+import { NotificationsCard } from "@/components/pwa/notifications-card";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card } from "@/components/ui/card";
+import { env } from "@/lib/env";
+import { isPushEnabled } from "@/lib/notifications/push";
 
 export const metadata = { title: "Settings | Portfolio Intelligence" };
 
@@ -37,6 +41,10 @@ export default function SettingsPage() {
   return (
     <>
       <PageHeader title="Settings" />
+      <div className="mb-3 grid gap-3">
+        <InstallHint />
+        <NotificationsCard publicKey={isPushEnabled() ? env.NEXT_PUBLIC_VAPID_PUBLIC_KEY! : null} />
+      </div>
       <div className="grid gap-3 sm:grid-cols-2">
         {sections.map((section) => (
           <Card key={section.href} className="p-0">

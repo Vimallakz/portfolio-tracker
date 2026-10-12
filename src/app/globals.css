@@ -181,6 +181,48 @@
   }
 }
 
+/* Sideways-scrolling pill rows: swipeable without a scrollbar track under them. */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (max-width: 1023.98px) {
+  @media screen and (max-width: 639.98px) {
+    [data-slot="table-container"] td:first-child .truncate {
+      max-width: 9rem !important;
+    }
+  }
+
+  /* Room the bottom tab bar takes, so toasts sit above it. Zero on desktop and signed-out pages. */
+  body:has([data-bottom-nav]) {
+    --bottom-nav-space: calc(3.5rem + env(safe-area-inset-bottom));
+  }
+
+  /* Wide tables scroll sideways on small screens; keep the first column (the name) in view. */
+  @media screen {
+    [data-slot="table-container"] :is(th, td):first-child {
+      position: sticky;
+      left: 0;
+      z-index: 1;
+      background-color: var(--card);
+      box-shadow: inset -1px 0 0 var(--border);
+    }
+    /* Long names truncate sooner, so the sticky column leaves room for the figures. */
+    [data-slot="table-container"] td:first-child .truncate {
+      max-width: 14rem;
+    }
+    :root:not(.dark) [data-slot="table-container"] th:first-child {
+      background-image: linear-gradient(
+        color-mix(in oklab, var(--muted) 60%, transparent),
+        color-mix(in oklab, var(--muted) 60%, transparent)
+      );
+    }
+  }
+}
+
 @page {
   size: A4;
   margin: 12mm;

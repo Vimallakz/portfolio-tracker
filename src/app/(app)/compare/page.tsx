@@ -69,7 +69,7 @@ export default async function ComparePage({
       <ComparePicker snapshots={options} fromId={from.id} toId={to.id} />
 
       <ChangeFilterProvider key={`${from.id}-${to.id}`}>
-        <div className="grid gap-4">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-4">
           <ComparisonSummaryCard
             fromDate={from.snapshotDate}
             toDate={to.snapshotDate}

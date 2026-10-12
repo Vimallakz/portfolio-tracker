@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 import { CurrencyProvider } from "@/components/currency/currency-provider";
 import { AppHeader } from "@/components/layout/app-header";
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { BottomNav } from "@/components/layout/bottom-nav";
+import { OfflineBanner } from "@/components/pwa/offline-banner";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { DISPLAY_CURRENCY_COOKIE, parseDisplayCurrency } from "@/lib/currency/currency";
 import { getUsdInrRate } from "@/lib/currency/rate";
@@ -30,11 +32,13 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         <AppSidebar />
         <div className="flex min-w-0 flex-1 flex-col">
           <AppHeader user={user} profiles={profiles} activeProfile={activeProfile} uploadReminder={uploadReminder} />
-          <main className="flex-1 px-4 py-6 lg:px-8 print:p-0">
+          <OfflineBanner />
+          <main className="flex-1 px-4 pt-6 pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:px-8 lg:pb-6 print:p-0">
             <div className="mx-auto w-full max-w-7xl">{children}</div>
           </main>
         </div>
       </div>
+      <BottomNav />
     </CurrencyProvider>
   );
 }
