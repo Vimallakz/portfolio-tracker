@@ -4,6 +4,8 @@ import { SESSION_COOKIE } from "@/lib/auth/session-cookie";
 
 /** The offline page is cached by the service worker; the cron route checks its own bearer secret. */
 const PUBLIC_PATHS = ["/login", "/signup", "/offline", "/api/cron/notify"];
+/** The browser extension sends a Bearer token instead of the cookie; each handler verifies it. */
+const PUBLIC_PREFIXES = ["/api/extension/"];
 
 /**
  * Optimistic check only: it looks for the cookie, not a valid session, so pages
@@ -13,7 +15,11 @@ const PUBLIC_PATHS = ["/login", "/signup", "/offline", "/api/cron/notify"];
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
-  if (PUBLIC_PATHS.includes(pathname) || request.cookies.has(SESSION_COOKIE)) {
+  if (
+    PUBLIC_PATHS.includes(pathname) ||
+    PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix)) ||
+    request.cookies.has(SESSION_COOKIE)
+  ) {
     return NextResponse.next();
   }
 

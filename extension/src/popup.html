@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Portfolio Intelligence</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <img src="icons/icon-32.png" alt="" width="20" height="20" />
+      <h1>Portfolio Intelligence</h1>
+    </header>
+
+    <p id="notice" class="notice" hidden></p>
+
+    <form id="login" hidden>
+      <label>
+        App address
+        <input name="appUrl" list="app-urls" required autocomplete="url" />
+        <datalist id="app-urls">
+          <option value="http://localhost:3000"></option>
+        </datalist>
+      </label>
+      <label>
+        Email
+        <input name="email" type="email" required autocomplete="email" />
+      </label>
+      <label>
+        Password
+        <input name="password" type="password" required autocomplete="current-password" />
+      </label>
+      <button type="submit">Sign in</button>
+      <p class="hint">The extension gets its own sign-in. It can only read, and you can sign it out from Settings in the app.</p>
+    </form>
+
+    <section id="signed-in" hidden>
+      <p class="muted">
+        Signed in as <strong id="user-email"></strong><br />
+        <span id="app-url"></span>
+      </p>
+      <label>
+        Profile
+        <select id="profile"></select>
+      </label>
+      <p id="fetched-at" class="muted"></p>
+      <div class="actions">
+        <button type="button" id="refresh">Refresh data</button>
+        <button type="button" id="logout" class="secondary">Sign out</button>
+      </div>
+      <a href="https://www.tickertape.in/portfolio" target="_blank" rel="noreferrer">Open Tickertape Portfolio</a>
+    </section>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

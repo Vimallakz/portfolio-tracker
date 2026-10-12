@@ -14,6 +14,7 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Prisma's generated client is not ours to lint.
     "src/generated/**",
+    "extension/dist/**",
   ]),
   {
     rules: {

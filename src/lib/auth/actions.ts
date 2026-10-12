@@ -5,15 +5,12 @@ import { z } from "zod";
 
 import { Prisma } from "@/generated/prisma/client";
 import type { ActionResult } from "@/lib/actions/result";
+import { INVALID_CREDENTIALS, verifyCredentials } from "@/lib/auth/credentials";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { changePasswordFormSchema, loginFormSchema, safeRedirectPath, signupFormSchema } from "@/lib/auth/schema";
 import { createSession, deleteOtherSessions, deleteSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
-
-const INVALID_CREDENTIALS = "Email or password is incorrect.";
-
-let dummyHash: Promise<string> | undefined;
 
 export async function login(input: unknown, next?: unknown): Promise<ActionResult> {
   const parsed = loginFormSchema.safeParse(input);
@@ -22,20 +19,13 @@ export async function login(input: unknown, next?: unknown): Promise<ActionResul
     return { ok: false, error: z.prettifyError(parsed.error) };
   }
 
-  const user = await prisma.user.findUnique({
-    where: { email: parsed.data.email },
-    select: { id: true, passwordHash: true },
-  });
+  const userId = await verifyCredentials(parsed.data.email, parsed.data.password);
 
-  // Hash even for unknown emails, so response time does not reveal which emails have accounts.
-  dummyHash ??= hashPassword("not-a-real-password");
-  const valid = await verifyPassword(parsed.data.password, user?.passwordHash ?? (await dummyHash));
-
-  if (!user || !valid) {
+  if (!userId) {
     return { ok: false, error: INVALID_CREDENTIALS };
   }
 
-  await createSession(user.id);
+  await createSession(userId);
   redirect(safeRedirectPath(next));
 }
 

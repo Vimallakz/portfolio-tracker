@@ -1,4 +1,4 @@
-import { ChevronRight, IndianRupee, Tags, UserRound, UsersRound } from "lucide-react";
+import { ChevronRight, IndianRupee, Puzzle, Tags, UserRound, UsersRound } from "lucide-react";
 import Link from "next/link";
 
 import { InstallHint } from "@/components/pwa/install-hint";
@@ -34,6 +34,12 @@ const sections = [
     description: "Custom tags used to classify securities.",
     href: "/settings/tags",
     icon: Tags,
+  },
+  {
+    title: "Browser extension",
+    description: "Devices signed in to the Tickertape extension.",
+    href: "/settings/extension",
+    icon: Puzzle,
   },
 ];
 

@@ -1,0 +1,125 @@
+:root {
+  color-scheme: light dark;
+  --fg: #0f172a;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --bg: #ffffff;
+  --primary: #0f172a;
+  --primary-fg: #ffffff;
+  --danger: #dc2626;
+  font: 13px/1.45 system-ui, -apple-system, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fg: #f1f5f9;
+    --muted: #94a3b8;
+    --border: #334155;
+    --bg: #0f172a;
+    --primary: #f1f5f9;
+    --primary-fg: #0f172a;
+  }
+}
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  width: 300px;
+  margin: 0;
+  padding: 14px;
+  color: var(--fg);
+  background: var(--bg);
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+form,
+section {
+  display: grid;
+  gap: 10px;
+}
+
+label {
+  display: grid;
+  gap: 4px;
+  font-weight: 500;
+}
+
+input,
+select {
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+}
+
+button {
+  padding: 7px 10px;
+  border: 1px solid var(--primary);
+  border-radius: 6px;
+  font: inherit;
+  font-weight: 500;
+  color: var(--primary-fg);
+  background: var(--primary);
+  cursor: pointer;
+}
+
+button.secondary {
+  color: var(--fg);
+  background: transparent;
+  border-color: var(--border);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.actions button {
+  flex: 1;
+}
+
+a {
+  color: inherit;
+}
+
+p {
+  margin: 0;
+}
+
+.muted,
+.hint {
+  color: var(--muted);
+}
+
+.hint {
+  font-size: 12px;
+}
+
+.notice {
+  margin-bottom: 10px;
+  padding: 8px;
+  border: 1px solid var(--danger);
+  border-radius: 6px;
+  color: var(--danger);
+}

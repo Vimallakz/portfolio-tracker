@@ -64,6 +64,7 @@ model User {
 
   profiles          Profile[]
   sessions          Session[]
+  apiTokens         ApiToken[]
   pushSubscriptions PushSubscription[]
   notificationLogs  NotificationLog[]
 
@@ -114,6 +115,25 @@ model Session {
 
   @@index([userId])
   @@map("sessions")
+}
+
+/// A device signed in to the browser extension. Read-only: accepted by
+/// /api/extension/* only, never by pages or server actions. Like Session, only
+/// the token's SHA-256 is stored.
+model ApiToken {
+  id         String    @id @default(cuid())
+  userId     String
+  /// Shown in Settings, such as "Chrome on MacBook".
+  name       String
+  tokenHash  String    @unique
+  lastUsedAt DateTime?
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("api_tokens")
 }
 
 /// An investment profile (for example "Vimal" or "Wife"). This is the scope
