@@ -8,12 +8,14 @@ import {
 } from "@/components/benchmark/market-comparison-summary";
 import { Money } from "@/components/currency/money";
 import { ReportBridgeChart, ReportCurrency, ReportValueChart } from "@/components/reports/report-charts";
+import { ReportMovers } from "@/components/reports/report-movers";
 import { SignedValue } from "@/components/shared/signed-value";
 import { YearlyReturn } from "@/components/shared/yearly-return";
 import { formatSnapshotDate } from "@/lib/format/date";
 import { formatPercentage } from "@/lib/format/number";
 import type { MoneyWeightedReturn } from "@/lib/portfolio/analytics/xirr";
 import type { MarketPeriod } from "@/lib/portfolio/benchmark/benchmark";
+import type { ReportMovers as Movers } from "@/lib/portfolio/reports/movers";
 import type { PortfolioReport } from "@/lib/portfolio/reports/report";
 
 function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
@@ -40,12 +42,14 @@ function Stat({ label, children, detail }: { label: string; children: ReactNode;
 
 export function ReportDocument({
   report,
+  movers,
   market,
   yearly,
   profileName,
   generatedOn,
 }: {
   report: PortfolioReport;
+  movers: Movers;
   /** Null when there is no report for the period. */
   market: { period: MarketPeriod; months: MarketPeriod[] } | null;
   /** XIRR from the first snapshot to the report's end. */
@@ -154,6 +158,15 @@ export function ReportDocument({
             </span>
           </div>
         </Section>
+
+        {movers.gainers.length > 0 || movers.losers.length > 0 ? (
+          <Section
+            title="Top gainers and losers"
+            description="Holdings that rose and fell most this period, by market gain on the money in each. New money and stock splits do not count as moves. Names open Tickertape."
+          >
+            <ReportMovers movers={movers} />
+          </Section>
+        ) : null}
 
         {market ? (
           <Section

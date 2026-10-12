@@ -11,6 +11,7 @@ import { addMonths } from "@/lib/portfolio/analytics/monthly-performance";
 import { compareMonths, comparePeriod } from "@/lib/portfolio/benchmark/benchmark";
 import { getBenchmarkPrices } from "@/lib/portfolio/benchmark/prices";
 import { monthOf } from "@/lib/portfolio/planner/contributions";
+import { buildReportMovers } from "@/lib/portfolio/reports/movers";
 import { listMonths, listQuarters, parseReportPeriod } from "@/lib/portfolio/reports/period";
 import { buildReport, type PortfolioReport } from "@/lib/portfolio/reports/report";
 import { todayInTimeZone } from "@/lib/portfolio/reminders/upload-reminder";
@@ -65,7 +66,8 @@ export default async function ReportsPage({
     );
   }
 
-  const history = buildHistory(await listProfileSnapshots(activeProfile.id));
+  const snapshots = await listProfileSnapshots(activeProfile.id);
+  const history = buildHistory(snapshots);
   const first = history[0];
   const latest = history.at(-1);
 
@@ -100,6 +102,7 @@ export default async function ReportsPage({
         {report ? (
           <ReportDocument
             report={report}
+            movers={buildReportMovers(snapshots, period)}
             market={market}
             yearly={calculateMoneyWeightedReturn(history.filter((point) => point.snapshotDate <= report.endDate))}
             profileName={activeProfile.name}

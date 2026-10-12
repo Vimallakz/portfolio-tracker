@@ -14,6 +14,8 @@ export type SnapshotHoldingRow = {
   securityId: string;
   name: string;
   ticker: string | null;
+  /** Tickertape's slug when it differs from the ticker. */
+  tickertapeTicker?: string | null;
   type: SecurityType;
   quantity: string;
   averageBuyPrice: string;
