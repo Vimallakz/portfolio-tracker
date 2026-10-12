@@ -9,6 +9,7 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { DISPLAY_CURRENCY_COOKIE, parseDisplayCurrency } from "@/lib/currency/currency";
 import { getUsdInrRate } from "@/lib/currency/rate";
 import { getUploadReminder } from "@/lib/portfolio/reminders/queries";
+import { listSearchableSecurities } from "@/lib/portfolio/securities/queries";
 import { getProfileContext } from "@/lib/profiles/profile-context";
 
 /**
@@ -21,9 +22,10 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
     getProfileContext(),
     cookies(),
   ]);
-  const [rate, uploadReminder] = await Promise.all([
+  const [rate, uploadReminder, securities] = await Promise.all([
     getUsdInrRate(user.id),
     activeProfile ? getUploadReminder(activeProfile.id) : null,
+    activeProfile ? listSearchableSecurities(activeProfile.id) : [],
   ]);
 
   return (
@@ -31,7 +33,13 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
       <div className="flex min-h-full flex-1">
         <AppSidebar />
         <div className="flex min-w-0 flex-1 flex-col">
-          <AppHeader user={user} profiles={profiles} activeProfile={activeProfile} uploadReminder={uploadReminder} />
+          <AppHeader
+            user={user}
+            profiles={profiles}
+            activeProfile={activeProfile}
+            uploadReminder={uploadReminder}
+            securities={securities}
+          />
           <OfflineBanner />
           <main className="flex-1 px-4 pt-6 pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:px-8 lg:pb-6 print:p-0">
             <div className="mx-auto w-full max-w-7xl">{children}</div>

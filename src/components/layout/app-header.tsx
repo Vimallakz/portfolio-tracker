@@ -5,11 +5,13 @@ import { CurrencyToggle } from "@/components/currency/currency-toggle";
 import { AccountMenu } from "@/components/layout/account-menu";
 import { AppLogo } from "@/components/layout/app-logo";
 import { ProfileSelector } from "@/components/layout/profile-selector";
+import { SecuritySearch } from "@/components/layout/security-search";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { UploadReminder } from "@/components/layout/upload-reminder";
 import { Button } from "@/components/ui/button";
 import type { CurrentUser } from "@/lib/auth/current-user";
 import type { UploadReminderWindow } from "@/lib/portfolio/reminders/upload-reminder";
+import type { SearchableSecurity } from "@/lib/portfolio/securities/queries";
 import type { ProfileSummary } from "@/lib/profiles/queries";
 
 type AppHeaderProps = {
@@ -17,16 +19,21 @@ type AppHeaderProps = {
   profiles: ProfileSummary[];
   activeProfile: ProfileSummary | null;
   uploadReminder: UploadReminderWindow | null;
+  securities: SearchableSecurity[];
 };
 
-export function AppHeader({ user, profiles, activeProfile, uploadReminder }: AppHeaderProps) {
+export function AppHeader({ user, profiles, activeProfile, uploadReminder, securities }: AppHeaderProps) {
   return (
     <header className="bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-40 flex h-[calc(3.5rem+env(safe-area-inset-top))] items-center gap-2 border-b px-4 pt-[env(safe-area-inset-top)] backdrop-blur print:hidden">
       <div className="lg:hidden">
         <AppLogo compact />
       </div>
 
-      <div className="ml-auto flex min-w-0 items-center gap-1 sm:gap-2">
+      <div className="flex min-w-0 flex-1 justify-end sm:justify-center sm:px-4">
+        <SecuritySearch securities={securities} />
+      </div>
+
+      <div className="flex min-w-0 items-center gap-1 sm:gap-2">
         {uploadReminder && <UploadReminder reminder={uploadReminder} />}
         <CurrencyToggle />
         <ProfileSelector profiles={profiles} activeProfile={activeProfile} />

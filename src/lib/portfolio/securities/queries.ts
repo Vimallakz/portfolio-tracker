@@ -29,6 +29,18 @@ export async function findProfileSecurity(profileId: string, securityId: string)
   });
 }
 
+export type SearchableSecurity = { id: string; name: string; ticker: string | null; type: SecurityType };
+
+/** Every security the profile may open, for the global search. Small enough to filter in the browser. */
+export async function listSearchableSecurities(profileId: string): Promise<SearchableSecurity[]> {
+  const securities = await prisma.security.findMany({
+    where: visibleToProfile(profileId),
+    select: { id: true, name: true, ticker: true, type: true },
+  });
+
+  return securities.toSorted((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "base" }));
+}
+
 /** The latest snapshot's holdings with the profile's research and tags, or null with no snapshots. */
 export async function listSecurityRows(
   profileId: string,
