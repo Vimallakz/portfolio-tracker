@@ -20,6 +20,7 @@ function row(securityId: string, overrides: Partial<SecurityListRow> = {}): Secu
     pnlAmount: 0,
     pnlPercentage: 0,
     weight: 10,
+    targetUpside: null,
     conviction: null,
     investmentStatus: null,
     tags: [],

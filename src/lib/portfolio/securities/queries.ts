@@ -2,6 +2,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import type { SecurityType } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db/prisma";
 import type { SecurityListRow } from "@/lib/portfolio/securities/security-list";
+import { listProfileSignals } from "@/lib/portfolio/signals/queries";
 import type { ResearchInput } from "@/lib/research/schema";
 import type { TagSummary } from "@/lib/tags/schema";
 import { listTags } from "@/lib/tags/queries";
@@ -58,7 +59,7 @@ export async function listSecurityRows(
 
   const securityIds = latest.holdings.map((h) => h.securityId);
 
-  const [research, tagLinks] = await Promise.all([
+  const [research, tagLinks, signals] = await Promise.all([
     prisma.securityResearch.findMany({
       where: { profileId, securityId: { in: securityIds } },
       select: { securityId: true, conviction: true, investmentStatus: true },
@@ -68,9 +69,12 @@ export async function listSecurityRows(
       orderBy: { tag: { name: "asc" } },
       select: { securityId: true, tag: { select: { id: true, name: true } } },
     }),
+    // Same live, split-adjusted price as the security page, so the upside matches it.
+    listProfileSignals(profileId),
   ]);
 
   const researchBySecurity = new Map(research.map((r) => [r.securityId, r]));
+  const upsideBySecurity = new Map(signals.entries.map((entry) => [entry.securityId, entry.analystUpside]));
   const tagsBySecurity = Map.groupBy(tagLinks, (link) => link.securityId);
 
   return {
@@ -86,6 +90,7 @@ export async function listSecurityRows(
       pnlAmount: toNumber(h.pnlAmount),
       pnlPercentage: toNumber(h.pnlPercentage),
       weight: toNumber(h.weight),
+      targetUpside: upsideBySecurity.get(h.securityId) ?? null,
       conviction: researchBySecurity.get(h.securityId)?.conviction ?? null,
       investmentStatus: researchBySecurity.get(h.securityId)?.investmentStatus ?? null,
       tags: (tagsBySecurity.get(h.securityId) ?? []).map((link) => link.tag),

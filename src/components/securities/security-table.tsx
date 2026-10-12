@@ -47,6 +47,7 @@ const COLUMNS: Column[] = [
   { key: "currentValue", label: "Value", numeric: true },
   { key: "pnlAmount", label: "P&L", numeric: true },
   { key: "pnlPercentage", label: "P&L %", numeric: true },
+  { key: "targetUpside", label: "To target", numeric: true },
   { key: "weight", label: "Weight", numeric: true },
   { key: "investmentStatus", label: "Status" },
   { key: "conviction", label: "Conviction" },
@@ -216,6 +217,13 @@ export function SecurityTable({ rows, tags, initialFilters }: SecurityTableProps
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
                     <SignedValue value={row.pnlAmount}>{formatPercentage(row.pnlPercentage)}</SignedValue>
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {row.targetUpside === null ? (
+                      <span className="text-muted-foreground">—</span>
+                    ) : (
+                      <SignedValue value={row.targetUpside}>{formatPercentage(row.targetUpside, 1)}</SignedValue>
+                    )}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">{weightFormat.format(row.weight)}%</TableCell>
                   <TableCell>

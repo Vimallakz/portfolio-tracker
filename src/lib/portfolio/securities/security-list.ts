@@ -14,6 +14,8 @@ export type SecurityListRow = {
   pnlAmount: number;
   pnlPercentage: number;
   weight: number;
+  /** The analyst target from research against the current price (live when available), %. Null without one. */
+  targetUpside: number | null;
   conviction: Conviction | null;
   investmentStatus: InvestmentStatus | null;
   tags: TagSummary[];
@@ -67,6 +69,7 @@ export type SecuritySortKey =
   | "pnlAmount"
   | "pnlPercentage"
   | "weight"
+  | "targetUpside"
   | "investmentStatus"
   | "conviction";
 
